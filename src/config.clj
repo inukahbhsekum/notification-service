@@ -1,6 +1,6 @@
-(ns notification-service.config
+(ns config
  (:require [aero.core :as aero]
-  [clojure.java.io :as io]))
+           [clojure.java.io :as io]))
 
 
 (defn read-config
