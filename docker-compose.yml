@@ -6,7 +6,7 @@ services:
     ports:
       - '5432:5432'
     environment:
-      - 'POSTGRES_USER=ns'
-      - 'POSTGRES_PASSWORD=ns'
+      - 'POSTGRES_USER=nsd'
+      - 'POSTGRES_PASSWORD=nsd'
       - 'POSTGRES_DB=notification-service-db'
       - "POSTGRES_INITDB_ARGS='--encoding=UTF-8'"
