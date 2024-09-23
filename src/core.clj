@@ -1,5 +1,6 @@
 (ns core
-    (:require [components.in-memory-state-component :as in-memory-state-component]
+    (:require [components.pedestal-component :as pedestal-component]
+              [components.in-memory-state-component :as in-memory-state-component]
               [config :as config]
               [com.stuartsierra.component :as component]
               [io.pedestal.log :as log]
@@ -26,7 +27,11 @@
       [config]
       (component/system-map
        :in-memory-state-component (in-memory-state-component/new-in-memory-state-component config)
-       :data-source (datasource-component config)))
+       :data-source (datasource-component config)
+       :pedestal-component (component/using
+                              (pedestal-component/new-pedestal-component config)
+                              [:data-source
+                               :in-memory-state-component])))
 
 
 (defn -main
