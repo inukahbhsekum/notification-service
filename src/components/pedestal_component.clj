@@ -3,7 +3,8 @@
             [com.stuartsierra.component :as component]
             [io.pedestal.http :as http]
             [io.pedestal.interceptor :as interceptor]
-            [io.pedestal.http.content-negotiation :as content-negotiation]))
+            [io.pedestal.http.content-negotiation :as content-negotiation]
+            [user-details.routes :as routes]))
 
 
 (defn inject-dependencies
@@ -24,7 +25,7 @@
 
   (start [component]
     (ctl/info "Starting PedestalComponent")
-    (let [server (-> {::http/routes nil ;; replace this with routes
+    (let [server (-> {::http/routes routes/routes
                       ::http/type   :jetty
                       ::http/join?  false
                       ::http/port   (-> config
