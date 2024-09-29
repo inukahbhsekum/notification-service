@@ -7,7 +7,7 @@
 (def routes (route/expand-routes
               #{["/register-user"
                  :post [(body-params/body-params) handler/register-user-handler]
-                 :route-name :register-user]}))
+                 :route-name :register-user-handler]}))
 
 
 (def url-for (route/url-for-routes routes))

@@ -3,25 +3,8 @@
             [components.in-memory-state-component :as in-memory-state-component]
             [components.database-components :as db-component]
             [config :as config]
-            [com.stuartsierra.component :as component]
-            [io.pedestal.log :as log]
-            [next.jdbc.connection :as connection])
-  (:import (com.zaxxer.hikari HikariDataSource)
-           (org.flywaydb.core Flyway)))
-
-
-(defn datasource-component
-  [config]
-  (let [init-function (fn [datasource]
-                        (log/info "Running database init" datasource)
-                        (.migrate
-                          (.. (Flyway/configure)
-                              (dataSource datasource)
-                              (locations (into-array String ["classpath:database/migrations"]))
-                              (table "schema_version")
-                              (load))))]
-    (connection/component HikariDataSource
-                          (assoc (:db-spec config) :init-fn init-function))))
+            [clojure.tools.logging :as ctl]
+            [com.stuartsierra.component :as component]))
 
 
 (defn notification-service-system
@@ -40,7 +23,7 @@
   (let [system (-> (config/read-config)
                    (notification-service-system)
                    (component/start-system))]
-    (println "Starting notification service with config")
+    (ctl/info "Starting notification service with config")
     (.addShutdownHook
       (Runtime/getRuntime)
       (new Thread #(component/stop-system system)))))
