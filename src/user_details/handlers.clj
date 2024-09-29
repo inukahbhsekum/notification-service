@@ -4,10 +4,11 @@
 
 
 (defn- register-user
-  [{:keys [in-memory-state-component] :as dependencies} params]
-  ;; pending implementation
-  (ctl/log "----> " [dependencies params])
-  params)
+  [request dependencies]
+  (let [params (:query-params request)
+        request-body (:json-params request)]
+    (ctl/info "params: " [params request-body])
+    params))
 
 
 (def register-user-handler
@@ -15,8 +16,6 @@
    :enter
    (fn [{:keys [dependencies] :as context}]
      (let [request (:request context)
-           user-details (register-user dependencies
-                                       (-> request
-                                           :path-params))
+           user-details (register-user request dependencies)
            response (ur/ok user-details)]
        (assoc context :response response)))})
