@@ -23,7 +23,8 @@
                  [com.zaxxer/HikariCP "5.0.1"]
                  [hiccup/hiccup "2.0.0-RC1"]
                  [hikari-cp "3.0.1"]
-                 [faker/faker "0.3.2"]]
+                 [faker/faker "0.3.2"]
+                 [metosin/malli "0.16.4"]]
   :main ^:skip-aot core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
