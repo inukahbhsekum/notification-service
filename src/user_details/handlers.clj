@@ -1,18 +1,16 @@
 (ns user-details.handlers
-  (:require [clojure.tools.logging :as ctl]
-            [utils.response-utils :as ur]
-            [user-details.validation :as udv]))
+  (:require [utils.response-utils :as ur]
+            [user-details.validation :as udv]
+            [user-details.models :as udm]))
 
 
 (defn- register-user
   [request dependencies]
   (let [params (:query-params request)
         request-body (:json-params request)]
-    (ctl/info "request input: " [params request-body])
     (-> (merge request-body params)
-        udv/validate-user-creation-request)
-    ;; pending complete function
-    params))
+        udv/validate-user-creation-request
+        (udm/create-user dependencies))))
 
 
 (def register-user-handler
