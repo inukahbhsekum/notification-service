@@ -1,18 +1,20 @@
 (ns user-details.schema
-  (:require [clojure.string :as cs]
-            [clojure.set :as cset]
-            [malli.core :as m]
-            [malli.util :as mu]
-            [malli.generator :as mg]))
+  (:require [schema.core :as sc]))
 
 
-(def create-user-request
-  [:map
-   [:first_name [:string [:min 1 :max 50]]]
-   [:middle_name :string]
-   [:last_name [:string [:min 1 :max 50]]]
-   [:user_type [:enum "publisher" "receiver" "manager"]]
-   [:user_metadata []]])
+(sc/defschema
+  UserMetaData
+  {:ip_address          sc/Str
+   :last_known_location sc/Str
+   :last_country        sc/Str
+   :last_state          sc/Str
+   :last_city           sc/Str})
 
 
-(mg/generate create-user-request)
+(sc/defschema
+  CreateUserRequest
+  {:first_name    sc/Str
+   :middle_name   sc/Str
+   :last_name     sc/Str
+   :user_type     (sc/enum "publisher" "receiver" "manager")
+   :user_metadata UserMetaData})

@@ -16,3 +16,4 @@
 (def ok (partial response 200))
 (def not-found (partial response 404))
 (def created (partial response 201))
+(def failed (partial response 400))

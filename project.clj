@@ -5,6 +5,7 @@
             :url  "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[aero "1.1.6"]
                  [clj-http "3.12.3"]
+                 [clj-time "0.15.2"]
                  [com.stuartsierra/component "1.1.0"]
                  [com.stuartsierra/component.repl "0.2.0"]
                  [io.pedestal/pedestal.jetty "0.6.0"]
@@ -20,11 +21,10 @@
                  [org.flywaydb/flyway-core "9.21.2"]
                  [com.github.seancorfield/honeysql "2.4.1066"]
                  [org.postgresql/postgresql "42.2.10"]
-                 [com.zaxxer/HikariCP "5.0.1"]
+                 [com.zaxxer/HikariCP "5.1.0"]
                  [hiccup/hiccup "2.0.0-RC1"]
                  [hikari-cp "3.0.1"]
-                 [faker/faker "0.3.2"]
-                 [metosin/malli "0.16.4"]]
+                 [faker/faker "0.3.2"]]
   :main ^:skip-aot core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
