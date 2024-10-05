@@ -24,7 +24,7 @@
 
   (start [component]
     (println "Starting DatabaseComponent")
-    (assoc component :data-source datasource-component))
+    (assoc component :data-source (datasource-component config)))
 
   (stop [component]
     (println "Stopping DatabaseComponent")

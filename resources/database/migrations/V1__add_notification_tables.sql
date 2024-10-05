@@ -1,13 +1,11 @@
-create type user_types as enum('publisher', 'receiver', 'manager');
-
 create table notification_user
 (
  user_id uuid primary key default gen_random_uuid(),
  user_first_name varchar(100),
  user_middle_name varchar(100),
  user_last_name varchar(100),
- user_type user_types,
- user_metadata jsonb,
+ user_type varchar(100) not null,
+ user_metadata text,
  created_at timestamp not null default current_timestamp,
  updated_at timestamp not null default current_timestamp
 );
