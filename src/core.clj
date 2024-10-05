@@ -4,14 +4,30 @@
             [components.database-components :as db-component]
             [config :as config]
             [clojure.tools.logging :as ctl]
-            [com.stuartsierra.component :as component]))
+            [com.stuartsierra.component :as component]
+            [next.jdbc.connection :as connection])
+  (:import (com.zaxxer.hikari HikariDataSource)
+           (org.flywaydb.core Flyway)))
+
+
+(defn datasource-component
+  [config]
+  (let [init-function (fn [datasource]
+                        (.migrate
+                          (.. (Flyway/configure)
+                              (dataSource datasource)
+                              (locations (into-array String ["classpath:database/migrations"]))
+                              (table "schema_version")
+                              (load))))]
+    (connection/component HikariDataSource
+                          (assoc (:db-spec config) :init-fn init-function))))
 
 
 (defn notification-service-system
   [config]
   (component/system-map
     :in-memory-state-component (in-memory-state-component/new-in-memory-state-component config)
-    :data-source (db-component/new-database-component config)
+    :data-source (datasource-component config)
     :pedestal-component (component/using
                           (pedestal-component/new-pedestal-component config)
                           [:data-source
