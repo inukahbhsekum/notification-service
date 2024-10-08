@@ -1,11 +1,10 @@
 (ns components.database-components
-  (:require [com.stuartsierra.component :as component]
-            [next.jdbc.connection :as connection])
+  (:require [next.jdbc.connection :as connection])
   (:import (com.zaxxer.hikari HikariDataSource)
            (org.flywaydb.core Flyway)))
 
 
-(defn datasource-component
+(defn- get-database-pool
   [config]
   (let [init-function (fn [datasource]
                         (.migrate
@@ -18,19 +17,6 @@
                           (assoc (:db-spec config) :init-fn init-function))))
 
 
-(defrecord DatabaseComponent
-  [config]
-  component/Lifecycle
-
-  (start [component]
-    (println "Starting DatabaseComponent")
-    (assoc component :data-source (datasource-component config)))
-
-  (stop [component]
-    (println "Stopping DatabaseComponent")
-    (assoc component :data-source nil)))
-
-
 (defn new-database-component
   [config]
-  (map->DatabaseComponent config))
+  (get-database-pool config))
