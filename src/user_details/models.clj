@@ -12,7 +12,7 @@
 
 
 (defn create-user
-  [user-payload {:keys [data-source]}]
+  [user-payload {:keys [db-pool]}]
   (let [user-id (UUID/randomUUID)
         query (-> {:insert-into [:notification_user]
                    :columns     [:user_id :user_first_name
@@ -29,10 +29,9 @@
                                   (ctco/to-sql-time (ctc/now))
                                   (ctco/to-sql-time (ctc/now))]]}
                   (sql/format {:pretty true}))
-        user-details (jdbc/execute-one! (data-source)
+        user-details (jdbc/execute-one! (db-pool)
                                         query
                                         {:builder-fn rs/as-unqualified-kebab-maps})]
-    (ctl/info "user-details: " user-details)
     (if user-details
       (ur/created (:user_id user-details))
       (ur/failed))))

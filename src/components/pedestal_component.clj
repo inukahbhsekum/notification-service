@@ -20,7 +20,7 @@
 
 
 (defrecord PedestalComponent
-  [config example-component data-source in-memory-state-component]
+  [config db-pool in-memory-state-component]
   component/Lifecycle
 
   (start [component]
@@ -48,5 +48,4 @@
 
 (defn new-pedestal-component
   [config]
-  (print "config: " config)
   (map->PedestalComponent {:config config}))
