@@ -1,14 +1,14 @@
 (ns user-details.models
   (:require [clj-time.core :as ctc]
             [clj-time.coerce :as ctco]
-            [cheshire.core :refer [generate-string]]
             [clojure.test :refer :all]
-            [clojure.tools.logging :as ctl]
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
+            [utils.convertor-utils :as ucu]
             [utils.response-utils :as ur])
-  (:import [java.util UUID]))
+  (:import (clojure.data.json JSONWriter)
+           [java.util UUID]))
 
 
 (defn create-user
@@ -24,8 +24,7 @@
                                   (:middle_name user-payload)
                                   (:last_name user-payload)
                                   (:user_type user-payload)
-                                  (generate-string (:user_metadata user-payload)
-                                                   {:pretty true})
+                                  (ucu/sql-json-> (:user_metadata user-payload))
                                   (ctco/to-sql-time (ctc/now))
                                   (ctco/to-sql-time (ctc/now))]]}
                   (sql/format {:pretty true}))

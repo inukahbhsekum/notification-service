@@ -7,7 +7,6 @@
            com.stuartsierra/component.repl   {:mvn/version "0.2.0"}
            clj-http/clj-http                 {:mvn/version "3.12.3"}
            clj-time/clj-time                 {:mvn/version "0.15.2"}
-           cheshire/cheshire                 {:mvn/version "5.13.0"}
            org.clojure/tools.logging         {:mvn/version "1.2.4"}
            prismatic/schema                  {:mvn/version "1.4.1"}
            org.testcontainers/testcontainers {:mvn/version "1.18.0"}
@@ -19,7 +18,8 @@
            com.zaxxer/HikariCP               {:mvn/version "5.1.0"}
            hiccup/hiccup                     {:mvn/version "2.0.0-RC1"}
            faker/faker                       {:mvn/version "0.3.2"}
-           hikari-cp/hikari-cp               {:mvn/version "3.0.1"}}
+           hikari-cp/hikari-cp               {:mvn/version "3.0.1"}
+           org.clojure/data.json             {:mvn/version "2.5.0"}}
  :aliases {:dev  {:main-opts ["-e" "(require,'dev)"
                               "-e" "(in-ns,'dev)"]}
            :test {:extra-paths ["test"]

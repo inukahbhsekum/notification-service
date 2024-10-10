@@ -12,7 +12,6 @@
                  [io.pedestal/pedestal.route "0.6.0"]
                  [io.pedestal/pedestal.service "0.6.0"]
                  [org.clojure/clojure "1.10.3"]
-                 [cheshire "5.13.0"]
                  [org.slf4j/slf4j-simple "2.0.7"]
                  [org.clojure/tools.logging "1.2.4"]
                  [prismatic/schema "1.4.1"]
@@ -25,7 +24,8 @@
                  [com.zaxxer/HikariCP "5.1.0"]
                  [hiccup/hiccup "2.0.0-RC1"]
                  [hikari-cp "3.0.1"]
-                 [faker/faker "0.3.2"]]
+                 [faker/faker "0.3.2"]
+                 [org.clojure/data.json "2.5.0"]]
   :main ^:skip-aot core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all

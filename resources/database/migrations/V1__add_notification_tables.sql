@@ -5,7 +5,7 @@ create table notification_user
  user_middle_name varchar(100),
  user_last_name varchar(100),
  user_type varchar(100) not null,
- user_metadata text,
+ user_metadata json,
  created_at timestamp not null default current_timestamp,
  updated_at timestamp not null default current_timestamp
 );
