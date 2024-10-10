@@ -16,8 +16,7 @@
 (def register-user-handler
   {:name :register-user-handler
    :enter
-   (fn [{:keys [dependencies] :as context}]
-     (let [request (:request context)
-           user-details (register-user request dependencies)
+   (fn [{:keys [request dependencies] :as context}]
+     (let [user-details (register-user request dependencies)
            response (ur/ok user-details)]
        (assoc context :response response)))})
