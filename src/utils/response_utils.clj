@@ -1,6 +1,5 @@
 (ns utils.response-utils
-  (:require [clojure.test :refer :all]
-            [cheshire.core :as json]))
+  (:require [clojure.data.json :as json]))
 
 
 (defn response
@@ -10,7 +9,7 @@
    (merge
      {:status  status
       :headers {"Content-type" "application/json"}}
-     (when body {:body (json/encode body)}))))
+     (when body {:body (json/write-str body)}))))
 
 
 (def ok (partial response 200))
