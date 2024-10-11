@@ -6,11 +6,13 @@
 
 (defn- register-user
   [request dependencies]
-  (let [params (:query-params request)
-        request-body (:json-params request)]
-    (-> (merge request-body params)
+  (try
+    (-> {:request-body (:json-params request)
+         :params       (:query-params request)}
         udv/validate-user-creation-request
-        (udm/create-user dependencies))))
+        (udm/create-or-update-user dependencies))
+    (catch Exception e
+      (ur/failed (ex-message e)))))
 
 
 (def register-user-handler
