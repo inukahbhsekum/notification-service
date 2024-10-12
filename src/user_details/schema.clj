@@ -18,3 +18,10 @@
    :last_name     sc/Str
    :user_type     (sc/enum "publisher" "receiver" "manager")
    :user_metadata UserMetaData})
+
+
+(sc/defschema
+  CreateTopicRequest
+  {:title       sc/Str
+   :description sc/Str
+   :user_id     sc/Str})
