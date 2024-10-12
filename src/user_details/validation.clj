@@ -36,13 +36,13 @@
           valid-payload (sc/validate uds/CreateTopicRequest request-body)
           user-id (:user_id valid-payload)
           user-details (udm/fetch-user-details user-id dependencies)]
-      (when (or (not= (:user_type user-details) "manager")
-                (not= (:user_type user-details) "publisher"))
+      (when (and (not= (:user-type user-details) "manager")
+                 (not= (:user-type user-details) "publisher"))
         (throw (Exception. "User should be publisher or manager")))
       (assoc valid-payload :topic_id topic_id))
     (catch Exception e
       (ctl/error "Invalid create topic request payload"
                  request-body
                  (ex-message e))
-      (throw (Exception. (str "Invalid create topic request"
+      (throw (Exception. (str "Invalid create topic request, "
                               (ex-message e)))))))

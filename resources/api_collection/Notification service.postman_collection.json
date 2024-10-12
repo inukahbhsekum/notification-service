@@ -1,0 +1,112 @@
+{
+	"info": {
+		"_postman_id": "bd3fd5fe-d88f-40ae-85c9-ceae79358ae2",
+		"name": "Notification service",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "27355447"
+	},
+	"item": [
+		{
+			"name": "register user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"Mukesh\",\n    \"middle_name\": \"Singh\",\n    \"last_name\": \"Bhakuni\",\n    \"user_type\": \"manager\",\n    \"user_metadata\": {\n        \"ip_address\": \"127.0.0.1\",\n        \"last_known_location\": \"Pune\",\n        \"last_country\": \"India\",\n        \"last_state\": \"Maharashtra\",\n        \"last_city\": \"Pune\"\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3004/register-user?user_id=1f5c539e-aab6-47b0-b163-81735a8733f7",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3004",
+					"path": [
+						"register-user"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "1f5c539e-aab6-47b0-b163-81735a8733f7"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create topic",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"topic 1\",\n    \"description\": \"This is the first topic\",\n    \"user_id\": \"1f5c539e-aab6-47b0-b163-81735a8733f7\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3004/create-topic?topic_id=e1c73845-c141-4c8f-81fd-de66568f8652",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3004",
+					"path": [
+						"create-topic"
+					],
+					"query": [
+						{
+							"key": "topic_id",
+							"value": "e1c73845-c141-4c8f-81fd-de66568f8652"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"topic 1\",\n    \"description\": \"This is the first topic\",\n    \"user_id\": \"1f5c539e-aab6-47b0-b163-81735a8733f7\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:3004/fetch-user?user_id=1f5c539e-aab6-47b0-b163-81735a8733f7",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "3004",
+					"path": [
+						"fetch-user"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "1f5c539e-aab6-47b0-b163-81735a8733f7"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
