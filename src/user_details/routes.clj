@@ -6,8 +6,11 @@
 
 (def routes (route/expand-routes
               #{["/register-user"
-                 :post [(body-params/body-params) handler/register-user-handler]
-                 :route-name :register-user-handler]}))
+                 :post [(body-params/body-params) handler/register-user]
+                 :route-name :register-user-handler]
+                ["/fetch-user"
+                 :post [(body-params/body-params) handler/get-user]
+                 :route-name :fetch-user-handler]}))
 
 
 (def url-for (route/url-for-routes routes))
