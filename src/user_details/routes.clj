@@ -10,7 +10,10 @@
                  :route-name :register-user-handler]
                 ["/fetch-user"
                  :post [(body-params/body-params) handler/get-user]
-                 :route-name :fetch-user-handler]}))
+                 :route-name :fetch-user-handler]
+                ["/create-topic"
+                 :post [(body-params/body-params) handler/create-topic-handler]
+                 :route-name :create-topic-handler]}))
 
 
 (def url-for (route/url-for-routes routes))
