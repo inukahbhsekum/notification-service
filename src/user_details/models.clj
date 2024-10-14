@@ -61,7 +61,7 @@
                            .getValue
                            json/read-json)))
     (catch Exception e
-      (ctl/error "User not found" (ex-message e))
+      (ctl/error "User not found " (ex-message e))
       (ur/not-found (str "User not found with id: " user-id)))))
 
 
