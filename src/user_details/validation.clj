@@ -46,3 +46,24 @@
                  (ex-message e))
       (throw (Exception. (str "Invalid create topic request, "
                               (ex-message e)))))))
+
+
+(defn validate-topic-user-mapping-request
+  [{:keys [request-body] :as request-payload} dependencies]
+  (ctl/info "create topic user mapping request payload: " request-payload)
+  (try
+    (let [valid-payload (sc/validate uds/CreateTopicUserMappingRequest
+                                     request-body)
+          user-details (udm/fetch-user-details (:manager-id valid-payload)
+                                               dependencies)
+          user-ids (:user-ids valid-payload)]
+      (when (not= (:user-type user-details) "manager")
+        (throw (Exception. "User should be a manager for creating the mapping")))
+      (merge valid-payload
+             (:user-ids (mapv UUID/fromString user-ids))))
+    (catch Exception e
+      (ctl/error "Invalid topic user request payload"
+                 request-payload
+                 (ex-message e))
+      (throw (Exception. (str "Invalid topic user mapping request "
+                              (ex-message e)))))))

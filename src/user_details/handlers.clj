@@ -34,7 +34,7 @@
        (assoc context :response user-details)))})
 
 
-(defn- create-topic
+(defn- create-the-topic
   [request dependencies]
   (try
     (-> {:request-body (:json-params request)
@@ -45,10 +45,31 @@
       (ur/failed (ex-message e)))))
 
 
-(def create-topic-handler
+(def create-topic
   {:name :create-topic-handler
    :enter
    (fn [{:keys [request dependencies] :as context}]
-     (let [topic-details (create-topic request dependencies)
+     (let [topic-details (create-the-topic request dependencies)
            response (ur/ok topic-details)]
+       (assoc context :response response)))})
+
+
+(defn- create-the-topic-user-mapping
+  [request dependencies]
+  (try
+    (-> {:request-body (:json-params request)
+      :params       (:query-params request)}
+     (udv/validate-topic-user-mapping-request dependencies)
+     (udm/update-notification-receivers dependencies))
+    (catch Exception e
+      (ur/failed (ex-message e)))))
+
+
+(def create-topic-user-mapping
+  {:name :create-topic-user-mapping
+   :enter
+   (fn [{:keys [request dependencies] :as context}]
+     (let [topic-user-mapping (create-the-topic-user-mapping request
+                                                             dependencies)
+           response (ur/ok topic-user-mapping)]
        (assoc context :response response)))})

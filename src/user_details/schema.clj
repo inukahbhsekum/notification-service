@@ -25,3 +25,10 @@
   {:title       sc/Str
    :description sc/Str
    :user_id     sc/Str})
+
+
+(sc/defschema
+  CreateTopicUserMappingRequest
+  {:topic-id   sc/Str
+   :user-ids   [sc/Str]
+   :manager-id sc/Str})
