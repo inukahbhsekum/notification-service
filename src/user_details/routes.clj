@@ -12,8 +12,11 @@
                  :post [(body-params/body-params) handler/get-user]
                  :route-name :fetch-user-handler]
                 ["/create-topic"
-                 :post [(body-params/body-params) handler/create-topic-handler]
-                 :route-name :create-topic-handler]}))
+                 :post [(body-params/body-params) handler/create-topic]
+                 :route-name :create-topic-handler]
+                ["/create-topic-mapping"
+                 :post [(body-params/body-params) handler/create-topic-user-mapping]
+                 :route-name :create-topic-user-mapping]}))
 
 
 (def url-for (route/url-for-routes routes))
