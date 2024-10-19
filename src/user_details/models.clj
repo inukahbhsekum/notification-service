@@ -94,6 +94,7 @@
 
 
 (defn- update-user-topic
+  "It maps a user to a topic for publishing message"
   [user-id topic-id db-pool]
   (let [query (-> {:insert-into [:user_notification_topic]
                    :columns     [:user_id
