@@ -1,5 +1,6 @@
 (ns user-details.validation
-  (:require [clojure.tools.logging :as ctl]
+  (:require [cheshire.core :as json]
+            [clojure.tools.logging :as ctl]
             [schema.core :as sc]
             [user-details.models :as udm]
             [user-details.schema :as uds])
@@ -54,13 +55,13 @@
   (try
     (let [valid-payload (sc/validate uds/CreateTopicUserMappingRequest
                                      request-body)
-          user-details (udm/fetch-user-details (:manager-id valid-payload)
-                                               dependencies)
+          user-details-result (udm/fetch-user-details (:manager-id valid-payload)
+                                                      dependencies)
+          user-details (json/parse-string (:body user-details-result))
           user-ids (:user-ids valid-payload)]
-      (when (not= (:user-type user-details) "manager")
+      (when (not= (user-details "user-type") "manager")
         (throw (Exception. "User should be a manager for creating the mapping")))
-      (merge valid-payload
-             (:user-ids (mapv UUID/fromString user-ids))))
+      valid-payload)
     (catch Exception e
       (ctl/error "Invalid topic user request payload"
                  request-payload

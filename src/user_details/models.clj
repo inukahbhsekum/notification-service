@@ -55,11 +55,11 @@
           user-details (jdbc/execute-one! (db-pool)
                                           query
                                           {:builder-fn rs/as-unqualified-kebab-maps})]
-      (assoc user-details
-        :user-metadata (-> :user-metadata
-                           user-details
-                           .getValue
-                           json/read-json)))
+      (ur/ok (assoc user-details
+               :user-metadata (-> :user-metadata
+                                  user-details
+                                  .getValue
+                                  json/read-json))))
     (catch Exception e
       (ctl/error "User not found " (ex-message e))
       (ur/not-found (str "User not found with id: " user-id)))))
@@ -94,13 +94,12 @@
 
 
 (defn- update-user-topic
-  "It maps a user to a topic for publishing message"
   [user-id topic-id db-pool]
   (let [query (-> {:insert-into [:user_notification_topic]
                    :columns     [:user_id
                                  :topic_id]
-                   :values      [[user-id
-                                  topic-id]]}
+                   :values      [[(UUID/fromString user-id)
+                                  (UUID/fromString topic-id)]]}
                   (sql/format {:pretty true}))
         user-topic-mapping (jdbc/execute-one! (db-pool)
                                               query
