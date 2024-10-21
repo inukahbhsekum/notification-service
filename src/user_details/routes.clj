@@ -9,7 +9,7 @@
                  :post [(body-params/body-params) handler/register-user]
                  :route-name :register-user-handler]
                 ["/fetch-user"
-                 :post [(body-params/body-params) handler/get-user]
+                 :get [(body-params/body-params) handler/get-user]
                  :route-name :fetch-user-handler]
                 ["/create-topic"
                  :post [(body-params/body-params) handler/create-topic]

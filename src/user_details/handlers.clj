@@ -58,9 +58,9 @@
   [request dependencies]
   (try
     (-> {:request-body (:json-params request)
-      :params       (:query-params request)}
-     (udv/validate-topic-user-mapping-request dependencies)
-     (udm/update-notification-receivers dependencies))
+         :params       (:query-params request)}
+        (udv/validate-topic-user-mapping-request dependencies)
+        (udm/update-notification-receivers dependencies))
     (catch Exception e
       (ur/failed (ex-message e)))))
 
