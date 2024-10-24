@@ -35,6 +35,7 @@ create table notification_message
  sender uuid references notification_user(user_id),
  receiver uuid references notification_user(user_id),
  created_at timestamp not null default current_timestamp,
+ updated_at timestamp not null default current_timestamp,
  published_at timestamp
 );
 
