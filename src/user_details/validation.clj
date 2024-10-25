@@ -57,8 +57,7 @@
                                      request-body)
           user-details-result (udm/fetch-user-details (:manager-id valid-payload)
                                                       dependencies)
-          user-details (json/parse-string (:body user-details-result))
-          user-ids (:user-ids valid-payload)]
+          user-details (json/parse-string (:body user-details-result))]
       (when (not= (user-details "user-type") "manager")
         (throw (Exception. "User should be a manager for creating the mapping")))
       valid-payload)
