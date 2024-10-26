@@ -20,8 +20,7 @@
     :messages-component (component/using
                           (messages-component/new-message-component config)
                           [:db-pool
-                           :in-memory-state-component
-                           :user-component])))
+                           :in-memory-state-component])))
 
 
 (defn -main
