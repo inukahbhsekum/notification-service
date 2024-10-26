@@ -29,7 +29,7 @@
                       ::http/type   :jetty
                       ::http/join?  false
                       ::http/port   (-> config
-                                        :server
+                                        :notification-server
                                         :port)}
                      (http/default-interceptors)
                      (update ::http/interceptors concat

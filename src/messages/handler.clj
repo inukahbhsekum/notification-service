@@ -19,6 +19,6 @@
   {:name :create-message-handler
    :enter
    (fn [{:keys [request dependencies] :as context}]
-     (let [user-details (create-message request dependencies)
-           response (ur/ok user-details)]
+     (let [message (create-message request dependencies)
+           response (ur/ok message)]
        (assoc context :response response)))})

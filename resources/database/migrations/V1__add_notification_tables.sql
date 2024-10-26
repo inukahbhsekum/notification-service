@@ -36,7 +36,6 @@ create table notification_message
  receiver uuid references notification_user(user_id),
  created_at timestamp not null default current_timestamp,
  updated_at timestamp not null default current_timestamp,
- published_at timestamp
 );
 
 create index notification_message_user on notification_message(message_id, topic_id);
