@@ -40,3 +40,10 @@
     (if user-details
       (ur/created (str message-id))
       (ur/failed (str message-id)))))
+
+
+(defn update-message-activity-log
+  [message request]
+  ()
+  ;; in progress
+  )

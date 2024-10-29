@@ -4,13 +4,20 @@
             [messages.models :as mm]))
 
 
+(defn- update-message-activity-log
+  [message request]
+  (future
+    (mm/update-message-activity-log message request)))
+
+
 (defn- create-message
   [request dependencies]
   (try
     (-> {:request-body (:json-params request)
          :params       (:query-params request)}
         (mv/validate-message-creation-request dependencies)
-        (mm/create-or-update-message dependencies))
+        (mm/create-or-update-message dependencies)
+        (update-message-activity-log request))
     (catch Exception e
       (ur/failed (ex-message e)))))
 
