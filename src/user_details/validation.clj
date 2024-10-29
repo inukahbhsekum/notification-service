@@ -37,8 +37,7 @@
           valid-payload (sc/validate uds/CreateTopicRequest request-body)
           user-id (:user_id valid-payload)
           user-details (udm/fetch-user-details user-id dependencies)]
-      (when (and (not= (:user-type user-details) "manager")
-                 (not= (:user-type user-details) "publisher"))
+      (when (= (:user-type user-details) "receiver")
         (throw (Exception. "User should be publisher or manager")))
       (assoc valid-payload :topic_id topic_id))
     (catch Exception e
@@ -55,10 +54,9 @@
   (try
     (let [valid-payload (sc/validate uds/CreateTopicUserMappingRequest
                                      request-body)
-          user-details-result (udm/fetch-user-details (:manager-id valid-payload)
-                                                      dependencies)
-          user-details (json/parse-string (:body user-details-result))]
-      (when (not= (user-details "user-type") "manager")
+          user-details (udm/fetch-user-details (:manager-id valid-payload)
+                                               dependencies)]
+      (when (not= (:user-type user-details) "manager")
         (throw (Exception. "User should be a manager for creating the mapping")))
       valid-payload)
     (catch Exception e
