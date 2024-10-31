@@ -55,11 +55,12 @@
           user-details (jdbc/execute-one! (db-pool)
                                           query
                                           {:builder-fn rs/as-unqualified-kebab-maps})]
-      (ur/ok (assoc user-details
-               :user-metadata (-> :user-metadata
-                                  user-details
-                                  .getValue
-                                  json/read-json))))
+      (assoc user-details
+        :user-metadata (-> :user-metadata
+                           user-details
+                           .getValue
+                           json/read-json)
+        :user-id (str (:user-id user-details))))
     (catch Exception e
       (ctl/error "User not found " (ex-message e))
       (ur/not-found (str "User not found with id: " user-id)))))
@@ -116,3 +117,19 @@
     (catch Exception e
       (ctl/error "Users can't be mapped to topic" (ex-message e))
       (ur/failed "Users can't be mapped to topic"))))
+
+
+(defn fetch-notification-topic-receivers
+  [topic-id {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from   [:user_notification_topic]
+                     :where  [:= :topic_id (UUID/fromString topic-id)]}
+                    (sql/format {:pretty true}))
+          notification-topic-receivers (jdbc/execute-one! (db-pool)
+                                                          query
+                                                          {:builder-fn rs/as-unqualified-kebab-maps})]
+      notification-topic-receivers)
+    (catch Exception e
+      (ctl/error "User not found " (ex-message e))
+      (ur/not-found (str "topic receivers not found with id: " topic-id)))))

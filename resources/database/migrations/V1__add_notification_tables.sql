@@ -42,16 +42,3 @@ create index notification_message_user on notification_message(message_id, topic
 create index notification_message_sender on notification_message(message_id, sender);
 create index notification_message_receiver on notification_message(message_id, receiver);
 create index notification_message_all on notification_message(message_id, topic_id, sender, receiver);
-
-create table notification_message_activity_log
-(
- message_id uuid references notification_message (message_id),
- topic_id uuid references notification_topic (topic_id),
- sender uuid references notification_user(user_id),
- receiver uuid references notification_user(user_id),
- meta json,
- action_taken_at timestamp not null,
- created_at timestamp not null default current_timestamp
-);
-
-create index notification_message_activity_log_idx on notification_message_activity_log(message_id, topic_id, sender, receiver);

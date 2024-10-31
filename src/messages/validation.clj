@@ -11,11 +11,13 @@
     (let [user-id (:user_id params)
           user-details (udm/fetch-user-details user-id dependencies)
           valid-payload (sc/validate ms/CreateMessageRequest request-body)
-          user-type (:user-type user-details)
-          sender-details (udm/fetch-user-details user-id dependencies)]
+          sender-details (udm/fetch-user-details (:sender valid-payload)
+                                                 dependencies)
+          topic-receivers (udm/fetch-notification-topic-receivers (:topic_id valid-payload)
+                                                                  dependencies)
+          _ (def tr topic-receivers)]
       (cond
-        (and (not= user-type "manager")
-             (not= user-type "publisher"))
+        (= (:user-type user-details) "receiver")
         (throw (Exception. "Message can be created by manager or publisher"))
         (not= (:user-type sender-details) "publisher")
         (throw (Exception. "Only publisher can send message"))
