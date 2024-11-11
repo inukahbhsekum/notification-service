@@ -2,7 +2,6 @@
   (:require [clj-time.core :as ctc]
             [clj-time.coerce :as ctco]
             [clojure.data.json :as json]
-            [clojure.test :refer :all]
             [clojure.tools.logging :as ctl]
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
@@ -56,14 +55,14 @@
                                           query
                                           {:builder-fn rs/as-unqualified-kebab-maps})]
       (assoc user-details
-        :user-metadata (-> :user-metadata
-                           user-details
-                           .getValue
-                           json/read-json)
-        :user-id (str (:user-id user-details))))
+             :user-metadata (-> :user-metadata
+                                user-details
+                                .getValue
+                                json/read-json)
+             :user-id (str (:user-id user-details))))
     (catch Exception e
       (ctl/error "User not found " (ex-message e))
-      (ur/not-found (str "User not found with id: " user-id)))))
+      (throw (Exception. "Invalid user_id")))))
 
 
 (defn create-or-update-topic

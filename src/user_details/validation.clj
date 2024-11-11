@@ -1,6 +1,5 @@
 (ns user-details.validation
-  (:require [cheshire.core :as json]
-            [clojure.tools.logging :as ctl]
+  (:require [clojure.tools.logging :as ctl]
             [schema.core :as sc]
             [user-details.models :as udm]
             [user-details.schema :as uds])
@@ -8,8 +7,7 @@
 
 
 (defn validate-user-creation-request
-  [{:keys [request-body params] :as request-payload}]
-  (ctl/info "register user request payload: " request-payload)
+  [{:keys [request-body params]}]
   (try
     (let [user-id (:user_id params)
           user-id (if user-id
@@ -27,8 +25,7 @@
 
 
 (defn validate-topic-creation-request
-  [{:keys [request-body params] :as request-payload} dependencies]
-  (ctl/info "create topic request payload: " request-payload)
+  [{:keys [request-body params]} dependencies]
   (try
     (let [topic_id (:topic_id params)
           topic_id (if topic_id
@@ -37,7 +34,8 @@
           valid-payload (sc/validate uds/CreateTopicRequest request-body)
           user-id (:user_id valid-payload)
           user-details (udm/fetch-user-details user-id dependencies)]
-      (when (= (:user-type user-details) "receiver")
+      (when (and (not= (:user-type user-details) "manager")
+                 (not= (:user-type user-details) "publisher"))
         (throw (Exception. "User should be publisher or manager")))
       (assoc valid-payload :topic_id topic_id))
     (catch Exception e
@@ -50,7 +48,6 @@
 
 (defn validate-topic-user-mapping-request
   [{:keys [request-body] :as request-payload} dependencies]
-  (ctl/info "create topic user mapping request payload: " request-payload)
   (try
     (let [valid-payload (sc/validate uds/CreateTopicUserMappingRequest
                                      request-body)

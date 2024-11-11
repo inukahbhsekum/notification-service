@@ -1,7 +1,9 @@
 (ns user-details.handlers
-  (:require [utils.response-utils :as ur]
-            [user-details.validation :as udv]
-            [user-details.models :as udm]))
+  (:require
+   [clojure.tools.logging :as ctl]
+   [user-details.models :as udm]
+   [user-details.validation :as udv]
+   [utils.response-utils :as ur]))
 
 
 (defn- create-user
@@ -24,14 +26,24 @@
        (assoc context :response response)))})
 
 
+(defn- get-user-details
+  [request dependencies]
+  (try
+    (let [user-id (-> request
+                      :query-params
+                      :user_id)]
+      (udm/fetch-user-details user-id dependencies))
+    (catch Exception e
+      (ur/failed (ex-message e)))))
+
+
 (def get-user
   {:name :fetch-user-handler
    :enter
    (fn [{:keys [request dependencies] :as context}]
-     (let [params (:query-params request)
-           user-id (:user_id params)
-           user-details (udm/fetch-user-details user-id dependencies)]
-       (assoc context :response user-details)))})
+     (let [user-details (get-user-details request dependencies)
+           response (ur/ok user-details)]
+       (assoc context :response response)))})
 
 
 (defn- create-the-topic
