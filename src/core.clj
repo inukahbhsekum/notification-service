@@ -11,16 +11,16 @@
 (defn notification-service-system
   [config]
   (component/system-map
-    :in-memory-state-component (in-memory-state-component/new-in-memory-state-component config)
-    :db-pool (db-component/new-database-component config)
-    :user-component (component/using
-                      (user-component/new-user-component config)
-                      [:db-pool
-                       :in-memory-state-component])
-    :messages-component (component/using
-                          (messages-component/new-message-component config)
-                          [:db-pool
-                           :in-memory-state-component])))
+   :in-memory-state-component (in-memory-state-component/new-in-memory-state-component config)
+   :db-pool (db-component/new-database-component config)
+   :user-component (component/using
+                    (user-component/new-user-component config)
+                    [:db-pool
+                     :in-memory-state-component])
+   :messages-component (component/using
+                        (messages-component/new-message-component config)
+                        [:db-pool
+                         :in-memory-state-component])))
 
 
 (defn -main
@@ -30,5 +30,5 @@
                    (component/start-system))]
     (ctl/info "Starting notification service with config")
     (.addShutdownHook
-      (Runtime/getRuntime)
-      (new Thread #(component/stop-system system)))))
+     (Runtime/getRuntime)
+     (new Thread #(component/stop-system system)))))
