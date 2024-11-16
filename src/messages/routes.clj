@@ -5,9 +5,12 @@
 
 
 (def routes (route/expand-routes
-              #{["/create-message"
-                 :post [(body-params/body-params) handler/create-message-handler]
-                 :route-name :create-message-handler]}))
+             #{["/create-message"
+                :post [(body-params/body-params) handler/create-message-handler]
+                :route-name :create-message-handler]
+               ["/send-message"
+                :post [(body-params/body-params) handler/send-message-handler]
+                :route-name :send-message-handler]}))
 
 
 (def url-for (route/url-for-routes routes))
