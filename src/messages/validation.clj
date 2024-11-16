@@ -14,8 +14,7 @@
           sender-details (udm/fetch-user-details (:sender valid-payload)
                                                  dependencies)
           topic-receivers (udm/fetch-notification-topic-receivers (:topic_id valid-payload)
-                                                                  dependencies)
-          _ (def tr topic-receivers)]
+                                                                  dependencies)]
       (cond
         (= (:user-type user-details) "receiver")
         (throw (Exception. "Message can be created by manager or publisher"))
@@ -28,3 +27,23 @@
     (catch Exception e
       (ctl/error "Invalid create message request" request-body (ex-message e))
       (throw (Exception. "Invalid create message request payload")))))
+
+
+(defn validate-send-message-request
+  [{:keys [request-body]} dependencies]
+  (try
+    (let [valid-payload (sc/validate ms/SendMessageRequest
+                                     request-body)
+          sender-details (udm/fetch-user-details (:manager_id valid-payload)
+                                                 dependencies)]
+      (cond
+        (and (not= (:user-type sender-details) "manager")
+             (not= (:user-type sender-details) "publisher"))
+        (throw (Exception. "Message can be sent by manager or publisher"))
+        (empty? (:message_text valid-payload))
+        (throw (Exception. "Message text cannot be empty"))
+        :else
+        valid-payload))
+    (catch Exception e
+      (ctl/error "Invalid send message request" request-body (ex-message e))
+      (throw (Exception. "Invalid send message request")))))
