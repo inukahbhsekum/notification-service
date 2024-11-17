@@ -30,8 +30,7 @@
     (-> {:request-body (:json-params request)
          :params       (:query-params request)}
         (mv/validate-send-message-request dependencies)
-        ;;send message part remaining
-        )
+        (mm/send-message dependencies))
     (catch Exception e
       (ur/failed (ex-message e)))))
 
