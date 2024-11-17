@@ -76,7 +76,7 @@
 
 (defn send-message
   [message-payload {:keys [db-pool] :as dependencies}]
-  (let [message (create-message message-payload dependencies)]
-    ;; catch message activity log
+  (let [message-details (create-message message-payload dependencies)]
     ;; send to consumer
-    ()))
+    (-> (create-message message-payload dependencies)
+        (create-message-activity-log dependencies))))
