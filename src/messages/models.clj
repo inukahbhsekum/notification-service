@@ -9,12 +9,11 @@
   (:import (java.util UUID)))
 
 
-(defn create-or-update-message
+(defn- create-message
   [message-payload {:keys [db-pool]}]
   (let [message-id (UUID/randomUUID)
         topic-id (UUID/fromString (:topic_id message-payload))
-        sender-id (UUID/fromString (:sender message-payload))
-        receiver (UUID/fromString (:receiver message-payload))
+        sender-id (UUID/fromString (:manager_id message-payload))
         query (-> {:insert-into   [:notification_message]
                    :columns       [:message_id :message_text
                                    :topic_id :sender
@@ -24,7 +23,6 @@
                                     (:message_text message-payload)
                                     topic-id
                                     sender-id
-                                    receiver
                                     (ctco/to-sql-time (ctc/now))
                                     (ctco/to-sql-time (ctc/now))]]
                    :on-conflict   [:message_id
@@ -33,7 +31,6 @@
                                             :message_text
                                             :topic_id
                                             :sender
-                                            :receiver
                                             :created_at
                                             :updated_at]}}
                   (sql/format {:pretty true}))
@@ -75,3 +72,11 @@
     (if message-log-details
       (ur/created message_id)
       (ur/failed message_id))))
+
+
+(defn send-message
+  [message-payload {:keys [db-pool] :as dependencies}]
+  (let [message-details (create-message message-payload dependencies)]
+    ;; send to consumer
+    (-> (create-message message-payload dependencies)
+        (create-message-activity-log dependencies))))
