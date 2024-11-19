@@ -5,7 +5,8 @@
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [utils.response-utils :as ur])
+            [utils.response-utils :as ur]
+            [utils.audit-log :as ual])
   (:import (java.util UUID)))
 
 
@@ -17,8 +18,7 @@
         query (-> {:insert-into   [:notification_message]
                    :columns       [:message_id :message_text
                                    :topic_id :sender
-                                   :receiver :created_at
-                                   :updated_at]
+                                   :created_at :updated_at]
                    :values        [[message-id
                                     (:message_text message-payload)
                                     topic-id
@@ -42,41 +42,15 @@
       (ur/failed message-payload))))
 
 
-(defn create-message-activity-log
-  [{:keys [sender receiver topic_id message_id message_text action_taken_at]}
-   {:keys [db-pool]}]
-  (let [query (-> {:insert-into   [:notification_message_activity_log]
-                   :columns       [:message-id :topic_id
-                                   :sender :receiver
-                                   :action_taken_at
-                                   :created_at]
-                   :values        [[message_id
-                                    message_text
-                                    topic_id
-                                    sender
-                                    receiver
-                                    action_taken_at
-                                    (ctco/to-sql-time (ctc/now))]]
-                   :on-conflict   [:message_id
-                                   {:where [:<> :message_id nil]}]
-                   :do-update-set {:fields [:message_id
-                                            :message_text
-                                            :topic_id
-                                            :sender
-                                            :receiver
-                                            :created_at]}}
-                  (sql/format {:pretty true}))
-        message-log-details (jdbc/execute-one! (db-pool)
-                                               query
-                                               {:builder-fn rs/as-unqualified-kebab-maps})]
-    (if message-log-details
-      (ur/created message_id)
-      (ur/failed message_id))))
+(defn- send-event-to-message-engine
+  [message-details dependencies]
+  (let []
+    message-details))
 
 
 (defn send-message
-  [message-payload {:keys [db-pool] :as dependencies}]
-  (let [message-details (create-message message-payload dependencies)]
-    ;; send to consumer
+  [message-payload dependencies]
+  (let []
     (-> (create-message message-payload dependencies)
-        (create-message-activity-log dependencies))))
+        (send-event-to-message-engine dependencies)
+        (ual/create-audit-log dependencies))))
