@@ -39,4 +39,4 @@ create table notification_message
 
 create index notification_message_user on notification_message(message_id, topic_id);
 create index notification_message_sender on notification_message(message_id, sender);
-create index notification_message_all on notification_message(message_id, topic_id, sender, receiver);
+create index notification_message_all on notification_message(message_id, topic_id, sender);
