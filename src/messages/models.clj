@@ -5,12 +5,11 @@
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [utils.response-utils :as ur]
-            [utils.audit-log :as ual])
+            [utils.response-utils :as ur])
   (:import (java.util UUID)))
 
 
-(defn- create-message
+(defn create-or-update-message
   [message-payload {:keys [db-pool]}]
   (let [message-id (UUID/randomUUID)
         topic-id (UUID/fromString (:topic_id message-payload))
@@ -40,17 +39,3 @@
     (if message-details
       (ur/created (assoc message-payload :message_id message-id))
       (ur/failed message-payload))))
-
-
-(defn- send-event-to-message-engine
-  [message-details dependencies]
-  (let []
-    message-details))
-
-
-(defn send-message
-  [message-payload dependencies]
-  (let []
-    (-> (create-message message-payload dependencies)
-        (send-event-to-message-engine dependencies)
-        (ual/create-audit-log dependencies))))

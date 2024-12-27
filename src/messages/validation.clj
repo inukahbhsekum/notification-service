@@ -14,8 +14,13 @@
           sender-details (udm/fetch-user-details (:sender valid-payload)
                                                  dependencies)
           topic-receivers (udm/fetch-notification-topic-receivers (:topic_id valid-payload)
-                                                                  dependencies)]
+                                                                  dependencies)
+          valid-reciever? (some? (filter (fn [{:keys [user_id]}]
+                                           (= user_id (:receiver valid-payload)))
+                                         topic-receivers))]
       (cond
+        (not valid-reciever?)
+        (throw (Exception. "Message reciever is not associated with the topic"))
         (= (:user-type user-details) "receiver")
         (throw (Exception. "Message can be created by manager or publisher"))
         (not= (:user-type sender-details) "publisher")

@@ -1,9 +1,7 @@
 (ns user-details.handlers
-  (:require
-   [clojure.tools.logging :as ctl]
-   [user-details.models :as udm]
-   [user-details.validation :as udv]
-   [utils.response-utils :as ur]))
+  (:require [user-details.models :as udm]
+            [user-details.validation :as udv]
+            [utils.response-utils :as ur]))
 
 
 (defn- create-user
