@@ -25,7 +25,8 @@
                  [hiccup/hiccup "2.0.0-RC1"]
                  [hikari-cp "3.0.1"]
                  [faker/faker "0.3.2"]
-                 [org.clojure/data.json "2.5.0"]]
+                 [org.clojure/data.json "2.5.0"]
+                 [http-kit "2.6.0"]]
   :main ^:skip-aot core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
