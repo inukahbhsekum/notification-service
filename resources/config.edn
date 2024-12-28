@@ -1,5 +1,6 @@
 {:notification-server {:port #long #or [#env NOTIFICATION_SERVICE_PORT 3004]}
  :message-server      {:port #long #or [#env MESSAGE_SERVICE_PORT 3005]}
+ :websocket-server    {:port #long #or [#env WEBSOCKET_SERVICE_PORT 3006]}
  :htmx                {:server {:port 3003}}
  :db-spec             {:jdbcUrl  "jdbc:postgresql://localhost:5432/notification-service-db"
                        :username "nsd"

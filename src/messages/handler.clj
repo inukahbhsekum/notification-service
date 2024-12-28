@@ -1,5 +1,6 @@
 (ns messages.handler
   (:require [utils.response-utils :as ur]
+            [messages.core :as mc]
             [messages.validation :as mv]
             [messages.models :as mm]))
 
@@ -30,8 +31,7 @@
     (-> {:request-body (:json-params request)
          :params       (:query-params request)}
         (mv/validate-send-message-request dependencies)
-        ;; todo: send message part remaining
-        )
+        (mc/send-message dependencies))
     (catch Exception e
       (ur/failed (ex-message e)))))
 
