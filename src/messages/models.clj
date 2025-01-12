@@ -5,7 +5,8 @@
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
-            [utils.response-utils :as ur])
+            [utils.response-utils :as ur]
+            [clojure.tools.logging :as ctl])
   (:import (java.util UUID)))
 
 
@@ -39,3 +40,19 @@
     (if message-details
       (ur/created (assoc message-payload :message_id message-id))
       (ur/failed message-payload))))
+
+
+(defn fetch-user-messages-for-topic
+  [{:keys [topic-id] :as zmap} {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_message]
+                     :where [:= :topic_id (UUID/fromString topic-id)]}
+                    (sql/format {:pretty true}))
+          topic-messages (jdbc/execute-one! (db-pool)
+                                            query
+                                            {:builder-fn rs/as-unqualified-kebab-maps})]
+      topic-messages)
+    (catch Exception e
+      (ctl/error "User not found " (ex-message e))
+      (throw (Exception. "Invalid user-id")))))
