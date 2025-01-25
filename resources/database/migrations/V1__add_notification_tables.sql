@@ -33,6 +33,7 @@ create table notification_message
  message_text text,
  topic_id uuid references notification_topic (topic_id),
  sender uuid references notification_user(user_id),
+ receiver uuid references notification_user(user_id),
  created_at timestamp not null default current_timestamp,
  updated_at timestamp not null default current_timestamp
 );
