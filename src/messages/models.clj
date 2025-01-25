@@ -56,3 +56,20 @@
     (catch Exception e
       (ctl/error "User not found " (ex-message e))
       (throw (Exception. "Invalid user-id")))))
+
+
+(defn fetch-user-pending-messages-for-topic
+  [{:keys [topic-id user-id] :as zmap} {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_message]
+                     :where
+                     [:= :topic_id (UUID/fromString topic-id)]
+                     [:= :user_id (UUID/fromString user-id)]}
+                    (sql/format {:pretty true}))
+          topic-messages (jdbc/execute-one! (db-pool)
+                                            query
+                                            {:builder-fn rs/as-unqualified-kebab-maps})]
+      (catch Exception e
+        (ctl/error "User messages for topic not available")
+        (throw (Exception. "User messages for topic not available"))))))
