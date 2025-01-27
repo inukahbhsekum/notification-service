@@ -62,14 +62,36 @@
   [{:keys [topic-id user-id] :as zmap} {:keys [db-pool]}]
   (try
     (let [query (-> {:select [:*]
-                     :from [:notification_message]
-                     :where
-                     [:= :topic_id (UUID/fromString topic-id)]
-                     [:= :user_id (UUID/fromString user-id)]}
+                     :from [:user_message_details]
+                     :where [:and [:= :topic_id (UUID/fromString topic-id)]
+                             [:= :user_id (UUID/fromString user-id)]]}
                     (sql/format {:pretty true}))
-          topic-messages (jdbc/execute-one! (db-pool)
-                                            query
-                                            {:builder-fn rs/as-unqualified-kebab-maps})]
-      (catch Exception e
-        (ctl/error "User messages for topic not available")
-        (throw (Exception. "User messages for topic not available"))))))
+          pending-user-topic-messages (jdbc/execute-one! (db-pool)
+                                                         query
+                                                         {:builder-fn rs/as-unqualified-kebab-maps})]
+      pending-user-topic-messages)
+    (catch Exception e
+      (ctl/error "User messages for topic not available")
+      (throw (Exception. "User messages for topic not available")))))
+
+
+(defn fetch-messages-bulk
+  [message-ids {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_message]
+                     :where [:in :message_id message-ids]}
+                    (sql/format {:pretty true}))
+          user-messages (jdbc/execute-one! (db-pool)
+                                           query
+                                           {:builder-fn rs/as-unqualified-kebab-maps})]
+      user-messages)
+    (catch Exception e
+      (ctl/error "User messages not available")
+      (throw (Exception. "User messages not available")))))
+
+
+(defn update-message-activity-log
+  [message {:keys [db-pool]}]
+  ;; TODO: complete the activity log for the actions
+  ())
