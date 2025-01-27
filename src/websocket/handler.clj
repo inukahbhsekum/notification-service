@@ -2,7 +2,6 @@
   (:require [cheshire.core :as json]
             [org.httpkit.server :as http]
             [messages.models :as mm]
-            [clojure.tools.logging :as ctl]
             [clojure.string :as cs]))
 
 
@@ -17,28 +16,33 @@
 (defmulti handle-websocket-message
   "It handles the different messages recieved or sent and creates
    the databases upsert and event handling"
-  (fn [_ message-payload]
+  (fn [_ _ message-payload]
     (:type message-payload)))
 
 
 (defmethod handle-websocket-message :connect
-  [channel {:keys [params] :as message-payload}]
+  [request channel {:keys [params]}]
   (let [{topic_id :topic_id
          user_id :user_id} (parse-query-params params)
-        ;; get pending user messages 
-         pending-user-messages (mm/fetch-user-messages-for-topic {:topic-id topic_id}
-                                                                 )]
-    (http/send! channel (json/generate-string message-payload))))
+        pending-user-messages (mm/fetch-user-pending-messages-for-topic {:topic-id topic_id
+                                                                         :user-id user_id}
+                                                                        request)
+        pending-message-ids (mapv :message_id pending-user-messages)
+        pending-messages (mm/fetch-messages-bulk pending-message-ids request)]
+    (doseq [message pending-messages]
+      (http/send! channel (json/generate-string {:message-body (:message_text message)
+                                                 :type :connect
+                                                 :params params})))))
 
 
 (defmethod handle-websocket-message :echo
-  [channel message-payload]
+  [request channel message-payload]
   (let []
     (http/send! channel (json/generate-string message-payload))))
 
 
 (defmethod handle-websocket-message :send
-  [channel message-payload]
+  [request channel message-payload]
   (let []
     (http/send! channel (json/generate-string message-payload))))
 
@@ -63,7 +67,7 @@
                                        :type :echo
                                        :params params}]
                              ;;TODO: add message to database and update linked entities
-                             (handle-websocket-message channel data))))
+                             (handle-websocket-message request channel data))))
 
         (http/on-close channel
                        (fn [status]
