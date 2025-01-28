@@ -1,8 +1,10 @@
 (ns websocket.handler
   (:require [cheshire.core :as json]
-            [org.httpkit.server :as http]
+            [clojure.string :as cs]
             [messages.models :as mm]
-            [clojure.string :as cs]))
+            [org.httpkit.server :as http]
+            [schema.core :as sc]
+            [websocket.schema :as ws]))
 
 
 (defn- parse-query-params
@@ -24,6 +26,9 @@
   [request channel {:keys [params]}]
   (let [{topic_id :topic_id
          user_id :user_id} (parse-query-params params)
+        valid-message-payload (sc/validate ws/WebsocketMessagePayload {:topic_id topic_id
+                                                                       :user_id user_id
+                                                                       :type :connect})
         pending-user-messages (mm/fetch-user-pending-messages-for-topic {:topic-id topic_id
                                                                          :user-id user_id}
                                                                         request)
