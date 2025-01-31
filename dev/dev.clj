@@ -1,6 +1,8 @@
 (ns dev
   (:gen-class)
   (:require [com.stuartsierra.component.repl :as component-repl]
+            [config :as config]
+            [core :as core]
             [websocket.server :as wss]))
 
 (defonce service-config (config/read-config))

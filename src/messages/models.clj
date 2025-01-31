@@ -38,7 +38,7 @@
                                            query
                                            {:builder-fn rs/as-unqualified-kebab-maps})]
     (if message-details
-      (ur/created (assoc message-payload :message_id message-id))
+      (assoc message-payload :message_id message-id)
       (ur/failed message-payload))))
 
 
@@ -83,7 +83,7 @@
                                    :receiver :meta :action_taken_at
                                    :created_at]
                    :values        [[id
-                                    (:message-id payload)
+                                    (:message_id payload)
                                     (:topic_id payload)
                                     (:sender_id payload)
                                     (:receiver payload)
