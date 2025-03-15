@@ -52,3 +52,9 @@
     (catch Exception e
       (ctl/error "Invalid send message request" request-body (ex-message e))
       (throw (Exception. "Invalid send message request")))))
+
+
+(defn validate-receiver
+  [reciever]
+  ;;TODO: add code to validate reciever
+  reciever)
