@@ -23,7 +23,7 @@
                                     (:first_name user-payload)
                                     (:middle_name user-payload)
                                     (:last_name user-payload)
-                                    (:user_type user-payload)
+                                    [:cast (:user_type user-payload) :user_types]
                                     (ucu/sql-json-> (:user_metadata user-payload))
                                     (ctco/to-sql-time (ctc/now))
                                     (ctco/to-sql-time (ctc/now))]]
