@@ -28,7 +28,8 @@ create table user_notification_topic
  user_id uuid references notification_user( user_id ),
  topic_id uuid references notification_topic ( topic_id ),
  created_at timestamp not null default current_timestamp,
- updated_at timestamp not null default current_timestamp
+ updated_at timestamp not null default current_timestamp,
+ primary key (user_id, topic_id)
 );
 
 create table notification_message

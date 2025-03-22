@@ -71,6 +71,9 @@
          :params       (:query-params request)}
         (udv/validate-topic-user-mapping-request dependencies)
         (udm/update-notification-receivers dependencies))
+    (ur/ok "Recievers added for the topic")
+    (catch org.postgresql.util.PSQLException e
+      (ur/failed (ex-message e)))
     (catch Exception e
       (ur/failed (ex-message e)))))
 
