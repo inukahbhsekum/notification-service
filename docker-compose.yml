@@ -10,3 +10,9 @@ services:
       - 'POSTGRES_PASSWORD=nsd'
       - 'POSTGRES_DB=notification-service-db'
       - "POSTGRES_INITDB_ARGS='--encoding=UTF-8'"
+    volumes:
+      - database:/var/lib/postgresql/data  # Attach named volume to correct PostgreSQL path
+
+# ✅ `volumes:` section should be at the root level with correct mapping syntax
+volumes:
+  database:  # Define the named volume properly
