@@ -127,9 +127,9 @@
                      :from   [:user_notification_topic]
                      :where  [:= :topic_id (UUID/fromString topic-id)]}
                     (sql/format {:pretty true}))
-          notification-topic-receivers (jdbc/execute-one! (db-pool)
-                                                          query
-                                                          {:builder-fn rs/as-unqualified-kebab-maps})]
+          notification-topic-receivers (jdbc/execute! (db-pool)
+                                                      query
+                                                      {:builder-fn rs/as-unqualified-kebab-maps})]
       notification-topic-receivers)
     (catch Exception e
       (ctl/error "User not found " (ex-message e))

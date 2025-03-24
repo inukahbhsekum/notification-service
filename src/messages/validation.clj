@@ -2,7 +2,8 @@
   (:require [clojure.tools.logging :as ctl]
             [messages.schema :as ms]
             [schema.core :as sc]
-            [user-details.models :as udm]))
+            [user-details.models :as udm])
+  (:import (java.util UUID)))
 
 
 (defn validate-message-creation-request
@@ -13,11 +14,12 @@
           valid-payload (sc/validate ms/CreateMessageRequest request-body)
           sender-details (udm/fetch-user-details (:sender valid-payload)
                                                  dependencies)
+          ;;@todo: optimise this and call db directly
           topic-receivers (udm/fetch-notification-topic-receivers (:topic_id valid-payload)
                                                                   dependencies)
-          valid-reciever? (some? (filter (fn [{:keys [user_id]}]
-                                           (= user_id (:receiver valid-payload)))
-                                         topic-receivers))]
+          valid-reciever? (some true? (map (fn [{:keys [user-id]}]
+                                             (= user-id (UUID/fromString (:receiver valid-payload))))
+                                           topic-receivers))]
       (cond
         (not valid-reciever?)
         (throw (Exception. "Message reciever is not associated with the topic"))
