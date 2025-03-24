@@ -14,10 +14,10 @@
   [message-payload {:keys [db-pool]}]
   (let [message-id (UUID/randomUUID)
         topic-id (UUID/fromString (:topic_id message-payload))
-        sender-id (UUID/fromString (:manager_id message-payload))
+        sender-id (UUID/fromString (:sender message-payload))
         query (-> {:insert-into   [:notification_message]
                    :columns       [:message_id :message_text
-                                   :topic_id :sender
+                                   :topic_id :created_by
                                    :created_at :updated_at]
                    :values        [[message-id
                                     (:message_text message-payload)
@@ -30,7 +30,7 @@
                    :do-update-set {:fields [:message_id
                                             :message_text
                                             :topic_id
-                                            :sender
+                                            :created_by
                                             :created_at
                                             :updated_at]}}
                   (sql/format {:pretty true}))

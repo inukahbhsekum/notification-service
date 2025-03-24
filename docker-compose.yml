@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   database:
     image: postgres:15.4
@@ -11,8 +9,7 @@ services:
       - 'POSTGRES_DB=notification-service-db'
       - "POSTGRES_INITDB_ARGS='--encoding=UTF-8'"
     volumes:
-      - database:/var/lib/postgresql/data  # Attach named volume to correct PostgreSQL path
+      - database:/var/lib/postgresql/data
 
-# ✅ `volumes:` section should be at the root level with correct mapping syntax
 volumes:
-  database:  # Define the named volume properly
+  database:
