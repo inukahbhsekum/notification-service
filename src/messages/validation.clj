@@ -14,12 +14,10 @@
           valid-payload (sc/validate ms/CreateMessageRequest request-body)
           sender-details (udm/fetch-user-details (:sender valid-payload)
                                                  dependencies)
-          ;;@todo: optimise this and call db directly
-          topic-receivers (udm/fetch-notification-topic-receivers (:topic_id valid-payload)
-                                                                  dependencies)
-          valid-reciever? (some true? (map (fn [{:keys [user-id]}]
-                                             (= user-id (UUID/fromString (:receiver valid-payload))))
-                                           topic-receivers))]
+          topic-receiver (udm/fetch-notification-topic-receiver (:topic_id valid-payload)
+                                                                (:receiver valid-payload)
+                                                                dependencies)
+          valid-reciever? (not (nil? topic-receiver))]
       (cond
         (not valid-reciever?)
         (throw (Exception. "Message reciever is not associated with the topic"))

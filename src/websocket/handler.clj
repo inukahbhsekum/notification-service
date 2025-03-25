@@ -4,7 +4,8 @@
             [messages.models :as mm]
             [org.httpkit.server :as http]
             [schema.core :as sc]
-            [websocket.schema :as ws]))
+            [websocket.schema :as ws]
+            [clojure.tools.logging :as ctl]))
 
 
 (defn- parse-query-params
@@ -24,14 +25,11 @@
 
 (defmethod handle-websocket-message :connect
   [request channel {:keys [params]}]
-  (let [{topic_id :topic_id
-         user_id :user_id} (parse-query-params params)
-        valid-message-payload (sc/validate ws/WebsocketMessagePayload {:topic_id topic_id
-                                                                       :user_id user_id
-                                                                       :type :connect})
-        pending-user-messages (mm/fetch-user-pending-messages-for-topic {:topic-id topic_id
-                                                                         :user-id user_id}
-                                                                        request)
+  (let [parsed-params (parse-query-params params)
+        valid-message-payload (sc/validate ws/WebsocketMessagePayload
+                                           (assoc parsed-params
+                                                  :type "connect"))
+        pending-user-messages (mm/fetch-user-pending-messages-for-topic request)
         pending-message-ids (mapv :message_id pending-user-messages)
         pending-messages (mm/fetch-messages-bulk pending-message-ids request)]
     (doseq [message pending-messages]
@@ -55,27 +53,23 @@
 (defn websocket-handler
   [request]
   (let [params (:query-string request)]
-    (http/with-channel request channel
-      (do
-        ;; send a connection established message
-        ;; this message is not stored in the db
-        ;; this is to just make sure that connection is set
-        ;; between client and server
-        (handle-websocket-message channel
-                                  {:message-body "connection established"
-                                   :type :connect
-                                   :params params})
+    (http/as-channel request
+                     {:on-open (fn [channel]
+                                 (handle-websocket-message channel {:message-body "connection established"
+                                                                    :type :connect
+                                                                    :params params}))
 
-        (http/on-receive channel
-                         (fn [msg]
-                           (let [data {:message-body msg
-                                       :type :echo
-                                       :params params}]
-                             ;;TODO: add message to database and update linked entities
-                             (handle-websocket-message request channel data))))
+                      :on-message (fn [channel msg]
+                                    (handle-websocket-message channel {:message-body msg
+                                                                       :type :echo
+                                                                       :params params}))
 
-        (http/on-close channel
-                       (fn [status]
-                         (http/send! channel
-                                     (json/generate-string {:message-body (str "disconnected" status)
-                                                            :type "connect"}))))))))
+                      :on-close (fn [channel status]
+                                  (http/send! channel
+                                              (json/generate-string {:message-body (str "disconnected" status)
+                                                                     :type "connect"})))
+
+                      :on-error (fn [channel error]
+                                  (http/send! channel
+                                              (json/generate-string {:message-body (str "disconnected" (str error))
+                                                                     :type "connect"})))})))
