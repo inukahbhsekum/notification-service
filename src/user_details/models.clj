@@ -111,8 +111,8 @@
   [{:keys [user-ids topic-id]} {:keys [db-pool]}]
   (try
     (reduce (fn [success-list user-id]
-              (let [user-topic-mapping (update-user-topic user-id topic-id db-pool)]
-                (conj success-list user-id)))
+              (update-user-topic user-id topic-id db-pool)
+              (conj success-list user-id))
             []
             user-ids)
     (catch Exception e
@@ -134,3 +134,21 @@
     (catch Exception e
       (ctl/error "User not found " (ex-message e))
       (ur/not-found (str "topic receivers not found with id: " topic-id)))))
+
+
+(defn fetch-notification-topic-receiver
+  [topic-id receiver-id {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from   [:user_notification_topic]
+                     :where  [:and
+                              [:= :topic_id (UUID/fromString topic-id)]
+                              [:= :user_id (UUID/fromString receiver-id)]]}
+                    (sql/format {:pretty true}))
+          notification-topic-receiver (jdbc/execute-one! (db-pool)
+                                                         query
+                                                         {:builder-fn rs/as-unqualified-kebab-maps})]
+      notification-topic-receiver)
+    (catch Exception e
+      (ctl/error "Reciever topic mapping does not exist" (ex-message e))
+      (ur/not-found (str "Reciever topic mapping does not exist" topic-id receiver-id)))))
