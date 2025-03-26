@@ -4,8 +4,8 @@
             [messages.models :as mm]
             [org.httpkit.server :as http]
             [schema.core :as sc]
-            [websocket.schema :as ws]
-            [clojure.tools.logging :as ctl]))
+            [websocket.server :as wser]
+            [websocket.schema :as ws]))
 
 
 (defn- parse-query-params
@@ -25,11 +25,13 @@
 
 (defmethod handle-websocket-message :connect
   [request channel {:keys [params]}]
-  (let [parsed-params (parse-query-params params)
+  (let [websocket-db-pool wser/websocket-db-pool
+        parsed-params (parse-query-params params)
         valid-message-payload (sc/validate ws/WebsocketMessagePayload
                                            (assoc parsed-params
                                                   :type "connect"))
-        pending-user-messages (mm/fetch-user-pending-messages-for-topic request)
+        pending-user-messages (mm/fetch-user-pending-messages-for-topic valid-message-payload
+                                                                        {:db-pool websocket-db-pool})
         pending-message-ids (mapv :message_id pending-user-messages)
         pending-messages (mm/fetch-messages-bulk pending-message-ids request)]
     (doseq [message pending-messages]
@@ -71,5 +73,5 @@
 
                       :on-error (fn [channel error]
                                   (http/send! channel
-                                              (json/generate-string {:message-body (str "disconnected" (str error))
+                                              (json/generate-string {:message-body (str "disconnected" error)
                                                                      :type "connect"})))})))
