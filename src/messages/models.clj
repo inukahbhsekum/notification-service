@@ -43,12 +43,12 @@
 
 
 (defn fetch-user-pending-messages-for-topic
-  [{:keys [topic-id user-id] :as zmap} {:keys [db-pool]}]
+  [{:keys [topic_id user_id] :as zmap} {:keys [db-pool]}]
   (try
     (let [query (-> {:select [:*]
                      :from [:user_message_details]
-                     :where [:and [:= :topic_id (UUID/fromString topic-id)]
-                             [:= :user_id (UUID/fromString user-id)]]}
+                     :where [:and [:= :topic_id (UUID/fromString topic_id)]
+                             [:= :user_id (UUID/fromString user_id)]]}
                     (sql/format {:pretty true}))
           pending-user-topic-messages (jdbc/execute-one! (db-pool)
                                                          query
