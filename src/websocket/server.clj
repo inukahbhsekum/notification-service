@@ -1,18 +1,11 @@
 (ns websocket.server
   (:require [clojure.tools.logging :as ctl]
-            [components.database-components :as db-component]
             [config :as config]
             [org.httpkit.server :as http]
+            [websocket.db :as wd]
             [websocket.handler :as wh]))
 
 (defonce server (atom nil))
-(defonce websocket-db-pool nil)
-
-(defn setup-websocket-server
-  []
-  (let [config (config/read-config)
-        db-pool (db-component/new-database-component config)]
-    (alter-var-root #'websocket-db-pool db-pool)))
 
 
 (defn start-websocket-server
@@ -20,7 +13,7 @@
   (let [port (-> config
                  :websocket-server
                  :port)]
-    (setup-websocket-server)
+    (wd/setup-websocket-server-db)
     (->> {:port port}
          (http/run-server wh/websocket-handler)
          (reset! server))
