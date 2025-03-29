@@ -30,4 +30,7 @@
   :main ^:skip-aot core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+             dev {:dependencies [[cider/cider-nrepl "0.45.0"]
+                                 [nrepl/nrepl "1.0.0"]]
+                  :repl-options {:nrepl-middleware [cider.nrepl/cider-middleware]}}})

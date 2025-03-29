@@ -4,7 +4,7 @@
             [messages.models :as mm]
             [org.httpkit.server :as http]
             [schema.core :as sc]
-            [websocket.server :as wser]
+            [websocket.db :as wd]
             [websocket.schema :as ws]))
 
 
@@ -25,7 +25,7 @@
 
 (defmethod handle-websocket-message :connect
   [request channel {:keys [params]}]
-  (let [websocket-db-pool wser/websocket-db-pool
+  (let [websocket-db-pool wd/websocket-db-pool
         parsed-params (parse-query-params params)
         valid-message-payload (sc/validate ws/WebsocketMessagePayload
                                            (assoc parsed-params
