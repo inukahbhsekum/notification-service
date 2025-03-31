@@ -2,19 +2,24 @@
   (:require [utils.response-utils :as ur]
             [messages.core :as mc]
             [messages.validation :as mv]
-            [messages.models :as mm]))
+            [messages.models :as mm]
+            [clojure.tools.logging :as ctl]))
 
 
 (defn- create-message
   [request dependencies]
   (try
-    (-> {:request-body (:json-params request)
-         :params       (:query-params request)}
-        (mv/validate-message-creation-request dependencies)
-        (mm/create-or-update-message dependencies)
-        (future
-          (mc/update-message-activity-log dependencies))
-        (ur/created))
+    (let [response (-> {:request-body (:json-params request)
+                        :params       (:query-params request)}
+                       (mv/validate-message-creation-request dependencies)
+                       (mm/create-or-update-message dependencies))]
+      (future
+        (try
+          (mc/update-message-activity-log response dependencies)
+          (ctl/log :info "Future execution finished successfully")
+          (catch Exception e
+            (ctl/log :error (str "Error in future execution:" (.getMessage e))))))
+      (ur/created response))
     (catch Exception e
       (ur/failed (ex-message e)))))
 
