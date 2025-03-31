@@ -2,8 +2,7 @@
   (:require [clojure.tools.logging :as ctl]
             [messages.schema :as ms]
             [schema.core :as sc]
-            [user-details.models :as udm])
-  (:import (java.util UUID)))
+            [user-details.models :as udm]))
 
 
 (defn validate-message-creation-request
@@ -17,9 +16,9 @@
           topic-receiver (udm/fetch-notification-topic-receiver (:topic_id valid-payload)
                                                                 (:receiver valid-payload)
                                                                 dependencies)
-          valid-reciever? (not (nil? topic-receiver))]
+          invalid-reciever? (nil? topic-receiver)]
       (cond
-        (not valid-reciever?)
+        invalid-reciever?
         (throw (Exception. "Message reciever is not associated with the topic"))
         (= (:user-type user-details) "receiver")
         (throw (Exception. "Message can be created by manager or publisher"))
@@ -52,9 +51,3 @@
     (catch Exception e
       (ctl/error "Invalid send message request" request-body (ex-message e))
       (throw (Exception. "Invalid send message request")))))
-
-
-(defn validate-receiver
-  [reciever]
-  ;;TODO: add code to validate reciever
-  reciever)

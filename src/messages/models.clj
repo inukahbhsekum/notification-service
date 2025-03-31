@@ -1,13 +1,16 @@
 (ns messages.models
-  (:require [clj-time.core :as ctc]
-            [clj-time.coerce :as ctco]
-            [clojure.test :refer :all]
-            [honey.sql :as sql]
-            [next.jdbc :as jdbc]
-            [next.jdbc.result-set :as rs]
-            [utils.response-utils :as ur]
-            [clojure.tools.logging :as ctl])
-  (:import (java.util UUID)))
+  (:require
+   [clj-time.coerce :as ctco]
+   [clj-time.core :as ctc]
+   [clojure.test :refer :all]
+   [clojure.tools.logging :as ctl]
+   [honey.sql :as sql]
+   [next.jdbc :as jdbc]
+   [next.jdbc.result-set :as rs]
+   [utils.convertor-utils :refer [sql-json->]]
+   [utils.response-utils :as ur])
+  (:import
+   (java.util UUID)))
 
 
 (defn create-or-update-message
@@ -80,23 +83,23 @@
   (let [id (UUID/randomUUID)
         query (-> {:insert-into   [:notification_message_activity_log]
                    :columns       [:id :message_id :topic_id :sender
-                                   :receiver :meta :action_taken_at
+                                   :receivers :meta :action_taken_at
                                    :created_at]
                    :values        [[id
                                     (:message_id payload)
                                     (:topic_id payload)
-                                    (:sender_id payload)
-                                    (:receiver payload)
-                                    (:meta payload)
+                                    (:sender payload)
+                                    (sql/call :array (:receivers payload))
+                                    (sql-json-> (:meta payload))
                                     (ctco/to-sql-time (ctc/now))
                                     (ctco/to-sql-time (ctc/now))]]
-                   :on-conflict   [:message_id
-                                   {:where [:<> :message_id nil]}]
+                   :on-conflict   [:id
+                                   {:where [:<> :id nil]}]
                    :do-update-set {:fields [:id
                                             :message_id
                                             :topic_id
                                             :sender
-                                            :receiver
+                                            :receivers
                                             :meta
                                             :action_taken_at
                                             :created_at]}}
