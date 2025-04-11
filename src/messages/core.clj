@@ -5,11 +5,11 @@
 
 
 (defn send-message
-  [{:keys [request-body]} dependencies]
+  [{:keys [request-body]} {:keys [db-pool]}]
   ;; create websocket connection and send message
-  (let [topic-id (:topic_id request-body)
-        message-text (:message_text request-body)
-        manager-id (:manager_id request-body)]
+  (let [:message_id (:message_id request-body)
+        :sender_id (:sender_id request-body)
+        :message_details (:message_details request-body)]
     ()))
 
 

@@ -45,6 +45,22 @@
       (ur/failed message-payload))))
 
 
+(defn fetch-message-by-message-id
+  [message_id {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_message]
+                     :where [:= message_id (UUID/fromString message_id)]}
+                    (sql/format {:pretty true}))
+          message-details (jdbc/execute-one! (db-pool)
+                                             query
+                                             {:builder-fn rs/as-unqualified-kebab-maps})]
+      message-details)
+    (catch Exception e
+      (ctl/error "Message not found with the message-id" e)
+      (throw (Exception. "Message not found with message-id")))))
+
+
 (defn fetch-user-pending-messages-for-topic
   [{:keys [topic_id user_id] :as zmap} {:keys [db-pool]}]
   (try
