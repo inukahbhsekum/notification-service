@@ -11,6 +11,5 @@
 
 (sc/defschema
   SendMessageRequest
-  {:message_text sc/Str
-   :topic_id sc/Str
-   :manager_id sc/Str})
+  {:message_id sc/Str
+   :sender_id  sc/Str})

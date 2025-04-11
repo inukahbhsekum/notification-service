@@ -1,5 +1,6 @@
 (ns messages.validation
   (:require [clojure.tools.logging :as ctl]
+            [messages.models :as mm]
             [messages.schema :as ms]
             [schema.core :as sc]
             [user-details.models :as udm]))
@@ -38,16 +39,17 @@
   (try
     (let [valid-payload (sc/validate ms/SendMessageRequest
                                      request-body)
-          sender-details (udm/fetch-user-details (:manager_id valid-payload)
-                                                 dependencies)]
+          sender-details (udm/fetch-user-details (:sender_id valid-payload)
+                                                 dependencies)
+          message-details (mm/fetch-message-by-message-id (:message_id valid-payload))]
       (cond
         (and (not= (:user-type sender-details) "manager")
              (not= (:user-type sender-details) "publisher"))
         (throw (Exception. "Message can be sent by manager or publisher"))
-        (empty? (:message_text valid-payload))
-        (throw (Exception. "Message text cannot be empty"))
+        (nil? message-details)
+        (throw (Exception. "Invalid message_id passed"))
         :else
-        valid-payload))
+        (assoc valid-payload :message_details message-details)))
     (catch Exception e
       (ctl/error "Invalid send message request" request-body (ex-message e))
       (throw (Exception. "Invalid send message request")))))
