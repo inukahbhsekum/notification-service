@@ -1,10 +1,11 @@
 (ns websocket.handler
   (:require [cheshire.core :as json]
             [clojure.string :as cs]
+            [components.database-components :as cdc]
             [messages.models :as mm]
             [org.httpkit.server :as http]
             [schema.core :as sc]
-            [websocket.db :as wd]
+            [user-details.models :as udm]
             [websocket.schema :as ws]))
 
 
@@ -25,16 +26,25 @@
 
 (defmethod handle-websocket-message :connect
   [request channel {:keys [params]}]
-  (let [websocket-db-pool wd/websocket-db-pool
+  (let [db-pool {:db-pool @cdc/data-pool}
         parsed-params (parse-query-params params)
         valid-message-payload (sc/validate ws/WebsocketMessagePayload
                                            (assoc parsed-params
                                                   :type "connect"))
+        topic-id (:topic_id valid-message-payload)
+        user-topic-details (udm/fetch-notification-topic-receiver topic-id
+                                                                  (:user_id valid-message-payload)
+                                                                  db-pool)
+        _ (when (nil? user-topic-details)
+            (throw (Exception. "user_id and topic_id should be valid")))
         pending-user-messages (mm/fetch-user-pending-messages-for-topic valid-message-payload
-                                                                        {:db-pool websocket-db-pool})
-        pending-message-ids (mapv :message_id pending-user-messages)
-        pending-messages (mm/fetch-messages-bulk pending-message-ids request)]
-    (doseq [message pending-messages]
+                                                                        db-pool)
+        pending-user-messages (if (nil? pending-user-messages)
+                                (mm/fetch-messages-by-topic-id topic-id db-pool)
+                                (->> pending-user-messages
+                                     (mapv :message_id)
+                                     (mm/fetch-messages-bulk db-pool)))]
+    (doseq [message pending-user-messages]
       (http/send! channel (json/generate-string {:message-body (:message_text message)
                                                  :type :connect
                                                  :params params})))))
@@ -57,14 +67,18 @@
   (let [params (:query-string request)]
     (http/as-channel request
                      {:on-open (fn [channel]
-                                 (handle-websocket-message channel {:message-body "connection established"
-                                                                    :type :connect
-                                                                    :params params}))
+                                 (handle-websocket-message request
+                                                           channel
+                                                           {:message-body "connection established"
+                                                            :type :connect
+                                                            :params params}))
 
                       :on-message (fn [channel msg]
-                                    (handle-websocket-message channel {:message-body msg
-                                                                       :type :echo
-                                                                       :params params}))
+                                    (handle-websocket-message request
+                                                              channel
+                                                              {:message-body msg
+                                                               :type :echo
+                                                               :params params}))
 
                       :on-close (fn [channel status]
                                   (http/send! channel

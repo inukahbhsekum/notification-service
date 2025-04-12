@@ -79,11 +79,27 @@
 
 
 (defn fetch-messages-bulk
-  [message-ids {:keys [db-pool]}]
+  [{:keys [db-pool]} message-ids]
   (try
     (let [query (-> {:select [:*]
                      :from [:notification_message]
                      :where [:in :message_id message-ids]}
+                    (sql/format {:pretty true}))
+          user-messages (jdbc/execute-one! (db-pool)
+                                           query
+                                           {:builder-fn rs/as-unqualified-kebab-maps})]
+      user-messages)
+    (catch Exception e
+      (ctl/error "User messages not available")
+      (throw (Exception. "User messages not available")))))
+
+
+(defn fetch-messages-by-topic-id
+  [topic-id {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_message]
+                     :where [:in :topic_id topic-id]}
                     (sql/format {:pretty true}))
           user-messages (jdbc/execute-one! (db-pool)
                                            query
