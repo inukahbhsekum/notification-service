@@ -1,16 +1,14 @@
 (ns messages.models
-  (:require
-   [clj-time.coerce :as ctco]
-   [clj-time.core :as ctc]
-   [clojure.test :refer :all]
-   [clojure.tools.logging :as ctl]
-   [honey.sql :as sql]
-   [next.jdbc :as jdbc]
-   [next.jdbc.result-set :as rs]
-   [utils.convertor-utils :refer [sql-json->]]
-   [utils.response-utils :as ur])
-  (:import
-   (java.util UUID)))
+  (:require [clj-time.coerce :as ctco]
+            [clj-time.core :as ctc]
+            [clojure.test :refer :all]
+            [clojure.tools.logging :as ctl]
+            [honey.sql :as sql]
+            [next.jdbc :as jdbc]
+            [next.jdbc.result-set :as rs]
+            [utils.convertor-utils :refer [sql-json->]]
+            [utils.response-utils :as ur])
+  (:import (java.util UUID)))
 
 
 (defn create-or-update-message

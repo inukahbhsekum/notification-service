@@ -1,11 +1,13 @@
 (ns components.database-components
-  (:require [next.jdbc.connection :as connection])
+  (:require [config :as config]
+            [next.jdbc :as nj]
+            [next.jdbc.connection :as connection])
   (:import (com.zaxxer.hikari HikariDataSource)
            (org.flywaydb.core Flyway)))
 
-(def data-pool (atom nil))
+(def datasource (atom nil))
 
-(defn- get-database-pool
+(defn- get-database-pool-component
   [config]
   (let [init-function (fn [datasource]
                         (.migrate
@@ -20,6 +22,13 @@
 
 (defn new-database-component
   [config]
-  (let [db-pool (get-database-pool config)]
-    (reset! data-pool db-pool)
-    @data-pool))
+  (get-database-pool-component config))
+
+
+(defn new-database-pool
+  []
+  (if @datasource
+    @datasource
+    (let [db-pool (nj/get-datasource (:db-spec (config/read-config)))]
+      (reset! datasource db-pool)
+      db-pool)))
