@@ -26,7 +26,8 @@
 
 (defmethod handle-websocket-message :connect
   [request channel {:keys [params]}]
-  (let [db-pool {:db-pool @cdc/data-pool}
+  (let [db-pool {:db-pool (fn []
+                            (cdc/new-database-pool))}
         parsed-params (parse-query-params params)
         valid-message-payload (sc/validate ws/WebsocketMessagePayload
                                            (assoc parsed-params

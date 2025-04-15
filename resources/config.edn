@@ -4,4 +4,10 @@
  :htmx                {:server {:port 3003}}
  :db-spec             {:jdbcUrl  "jdbc:postgresql://localhost:5432/notification-service-db"
                        :username "nsd"
-                       :password "nsd"}}
+                       :password "nsd"
+                       :dbtype "postgresql"
+                       :dbname "notification-service-db"
+                       :host "localhost"
+                       :port 5432
+                       :user "nsd"
+                       :maximumPoolSize 3}}
