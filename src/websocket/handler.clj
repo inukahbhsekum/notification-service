@@ -43,10 +43,10 @@
         pending-user-messages (if (nil? pending-user-messages)
                                 (mm/fetch-messages-by-topic-id topic-id db-pool)
                                 (->> pending-user-messages
-                                     (mapv :message_id)
+                                     (mapv :message-id)
                                      (mm/fetch-messages-bulk db-pool)))]
     (doseq [message pending-user-messages]
-      (http/send! channel (json/generate-string {:message-body (:message_text message)
+      (http/send! channel (json/generate-string {:message-body (:message-text message)
                                                  :type :echo
                                                  :params params})))))
 
