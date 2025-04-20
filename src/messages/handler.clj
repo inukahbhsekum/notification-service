@@ -16,6 +16,7 @@
       (future
         (try
           (mc/update-message-activity-log response dependencies)
+          (mc/update-user-message-details response dependencies)
           (ctl/log :info "Future execution finished successfully")
           (catch Exception e
             (ctl/log :error (str "Error in future execution:" (.getMessage e))))))

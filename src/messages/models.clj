@@ -140,3 +140,20 @@
     (if message-details
       (ur/created payload)
       (ur/failed payload))))
+
+
+(defn upsert-user-message-details
+  [payload {:keys [db-pool]}]
+  (let [query (-> {:insert-into   [:user_message_details]
+                   :columns       [:user_id :message_id :topic_id :status]
+                   :values        [[(:user_id payload)
+                                    (:message_id payload)
+                                    (UUID/fromString (:topic_id payload))
+                                    [:cast (:status payload) :message_status]]]}
+                  (sql/format {:pretty true}))
+        message-details (jdbc/execute-one! (db-pool)
+                                           query
+                                           {:builder-fn rs/as-unqualified-kebab-maps})]
+    (if message-details
+      (ur/created payload)
+      (ur/failed payload))))

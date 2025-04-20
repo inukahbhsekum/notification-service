@@ -47,7 +47,7 @@
                                      (mm/fetch-messages-bulk db-pool)))]
     (doseq [message pending-user-messages]
       (http/send! channel (json/generate-string {:message-body (:message_text message)
-                                                 :type :connect
+                                                 :type :echo
                                                  :params params})))))
 
 

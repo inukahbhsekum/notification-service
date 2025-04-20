@@ -26,3 +26,17 @@
                       :created_at (:created_at message-details)
                       :receivers receiver-ids}]
     (mm/update-message-activity-log activity-log dependencies)))
+
+
+(defn update-user-message-details
+  [message-details dependencies]
+  (let [topic-id (:topic_id message-details)
+        topic-receivers (udm/fetch-notification-topic-receivers topic-id dependencies)
+        receiver-ids (map :user-id topic-receivers)
+        message-id (:message_id message-details)]
+    (doseq [receiver-id receiver-ids]
+      (mm/upsert-user-message-details {:user_id receiver-id
+                                       :message_id message-id
+                                       :topic_id topic-id
+                                       :status "created"}
+                                      dependencies))))
