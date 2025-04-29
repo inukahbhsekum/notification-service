@@ -8,3 +8,8 @@
   {:topic_id sc/Str
    :user_id sc/Str
    :type websocket-message-type})
+
+(sc/defschema
+  EchoMessagePayload
+  {:topic_id sc/Str
+   :user_id sc/Str})
