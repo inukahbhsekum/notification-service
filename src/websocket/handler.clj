@@ -24,14 +24,14 @@
     (:type message-payload)))
 
 
-(defmethod handle-websocket-message :connect
+(defmethod handle-websocket-message :echo
   [request channel {:keys [params]}]
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
         parsed-params (parse-query-params params)
         valid-message-payload (sc/validate ws/WebsocketMessagePayload
                                            (assoc parsed-params
-                                                  :type "connect"))
+                                                  :type "echo"))
         topic-id (:topic_id valid-message-payload)
         user-topic-details (udm/fetch-notification-topic-receiver topic-id
                                                                   (:user_id valid-message-payload)
@@ -51,10 +51,29 @@
                                                  :params params})))))
 
 
-(defmethod handle-websocket-message :echo
-  [request channel message-payload]
-  (let []
-    (http/send! channel (json/generate-string message-payload))))
+(defmethod handle-websocket-message :connect
+  [request channel {:keys [params]}]
+  (let [parsed-params (parse-query-params params)
+        db-pool (:db-pool (fn []
+                            (cdc/new-database-pool)))
+        valid-message-payload (sc/validate ws/WebsocketMessagePayload
+                                           (assoc parsed-params
+                                                  :type "connect"))
+        topic-id (:topic-id valid-message-payload)
+        user-topic-details (udm/fetch-notification-topic-receivers topic-id
+                                                                   db-pool)
+        _ (when (nil? user-topic-details)
+            (throw (Exception. "user_id and topic_id should be valid")))
+        _ (def vmp valid-message-payload)
+        pending-user-messages (mm/fetch-user-pending-messages valid-message-payload
+                                                              db-pool)
+        pending-user-messages (if (nil? pending-user-messages)
+                                (mm/fetch-messages-by-topic-id topic-id db-pool)
+                                (->> pending-user-messages
+                                     (mapv :message-id)
+                                     (mm/fetch-messages-bulk db-pool)))]
+    (doseq [message pending-user-messages]
+      (http/send! channel (json/generate-string message)))))
 
 
 (defmethod handle-websocket-message :send

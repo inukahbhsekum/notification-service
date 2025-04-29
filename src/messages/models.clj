@@ -48,7 +48,7 @@
   (try
     (let [query (-> {:select [:*]
                      :from [:notification_message]
-                     :where [:= message_id (UUID/fromString message_id)]}
+                     :where [:= :message_id (UUID/fromString message_id)]}
                     (sql/format {:pretty true}))
           message-details (jdbc/execute-one! (db-pool)
                                              query
@@ -74,6 +74,25 @@
     (catch Exception e
       (ctl/error "User messages for topic not available")
       (throw (Exception. "User messages for topic not available")))))
+
+
+(defn fetch-user-pending-messages
+  [{:keys [user_id] :as zmap} {:keys [db-pool]}]
+  (def z zmap)
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:user_message_details]
+                     :where [:= :user_id (UUID/fromString user_id)]}
+                    (sql/format {:pretty true}))
+          pending-user-topic-messages (jdbc/execute-one! (db-pool)
+                                                         query
+                                                         {:builder-fn rs/as-unqualified-kebab-maps})
+          _ (def putm pending-user-topic-messages)
+          _ (def q query)]
+      pending-user-topic-messages)
+    (catch Exception e
+      (ctl/error "User messages for user_id not available")
+      (throw (Exception. "User messages for user_id not available")))))
 
 
 (defn fetch-messages-bulk
