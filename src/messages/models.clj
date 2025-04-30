@@ -78,17 +78,14 @@
 
 (defn fetch-user-pending-messages
   [{:keys [user_id] :as zmap} {:keys [db-pool]}]
-  (def z zmap)
   (try
     (let [query (-> {:select [:*]
                      :from [:user_message_details]
                      :where [:= :user_id (UUID/fromString user_id)]}
                     (sql/format {:pretty true}))
-          pending-user-topic-messages (jdbc/execute-one! (db-pool)
-                                                         query
-                                                         {:builder-fn rs/as-unqualified-kebab-maps})
-          _ (def putm pending-user-topic-messages)
-          _ (def q query)]
+          pending-user-topic-messages (jdbc/execute! (db-pool)
+                                                     query
+                                                     {:builder-fn rs/as-unqualified-kebab-maps})]
       pending-user-topic-messages)
     (catch Exception e
       (ctl/error "User messages for user_id not available")
