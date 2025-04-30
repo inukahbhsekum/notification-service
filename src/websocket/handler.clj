@@ -54,17 +54,17 @@
 (defmethod handle-websocket-message :connect
   [request channel {:keys [params]}]
   (let [parsed-params (parse-query-params params)
-        db-pool (:db-pool (fn []
-                            (cdc/new-database-pool)))
+        db-pool {:db-pool (fn []
+                            (cdc/new-database-pool))}
         valid-message-payload (sc/validate ws/WebsocketMessagePayload
                                            (assoc parsed-params
                                                   :type "connect"))
-        topic-id (:topic-id valid-message-payload)
-        user-topic-details (udm/fetch-notification-topic-receivers topic-id
-                                                                   db-pool)
+        topic-id (:topic_id valid-message-payload)
+        user-topic-details (udm/fetch-notification-topic-receiver topic-id
+                                                                  (:user_id valid-message-payload)
+                                                                  db-pool)
         _ (when (nil? user-topic-details)
             (throw (Exception. "user_id and topic_id should be valid")))
-        _ (def vmp valid-message-payload)
         pending-user-messages (mm/fetch-user-pending-messages valid-message-payload
                                                               db-pool)
         pending-user-messages (if (nil? pending-user-messages)
