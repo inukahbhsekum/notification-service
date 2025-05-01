@@ -76,7 +76,7 @@
       (throw (Exception. "User messages for topic not available")))))
 
 
-(defn fetch-user-pending-messages
+(defn fetch-all-user-pending-messages
   [{:keys [user_id] :as zmap} {:keys [db-pool]}]
   (try
     (let [query (-> {:select [:*]
@@ -90,6 +90,27 @@
     (catch Exception e
       (ctl/error "User messages for user_id not available")
       (throw (Exception. "User messages for user_id not available")))))
+
+
+(defn fetch-user-pending-messages-paginated
+  [{:keys [user_id from limit]
+    :as zmap
+    :or {from (ctc/epoch)
+         limit 10}} {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:user_message_details]
+                     :where [:> :created_at from]
+                     :order-by [:created_at :asc]
+                     :limit limit}
+                    (sql/format {:pretty true}))
+          pending-user-topic-messages (jdbc/execute! (db-pool)
+                                                     query
+                                                     {:builder-fn rs/as-unqualified-kebab-maps})]
+      pending-user-topic-messages)
+    (catch Exception e
+      (ctl/error "User messages for user_id in the given timerange not available")
+      (throw (Exception. "User messages for user_id in the given timerange not available")))))
 
 
 (defn fetch-messages-bulk
