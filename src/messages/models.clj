@@ -100,7 +100,8 @@
   (try
     (let [query (-> {:select [:*]
                      :from [:user_message_details]
-                     :where [:> :created_at from]
+                     :where [:and [:> :created_at (ctco/to-sql-time from)]
+                             [:= :user_id user_id]]
                      :order-by [:created_at :asc]
                      :limit limit}
                     (sql/format {:pretty true}))

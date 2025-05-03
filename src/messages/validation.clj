@@ -1,9 +1,11 @@
 (ns messages.validation
   (:require [clojure.tools.logging :as ctl]
+            [utils.convertor-utils :as ucu]
             [messages.models :as mm]
             [messages.schema :as ms]
             [schema.core :as sc]
-            [user-details.models :as udm]))
+            [user-details.models :as udm])
+  (:import java.util.UUID))
 
 
 (defn validate-message-creation-request
@@ -53,3 +55,21 @@
     (catch Exception e
       (ctl/error "Invalid send message request" request-body (ex-message e))
       (throw (Exception. "Invalid send message request")))))
+
+
+(defn validate-fetch-message-request
+  [{:keys [request-body]} dependencies]
+  (try
+    (let [valid-payload (sc/validate ms/FetchMessageRequest request-body)
+          user-id (:user_id valid-payload)
+          user-details (udm/fetch-user-details user-id
+                                               dependencies)
+          from-timestamp (ucu/millisecond-to-datetime (:from valid-payload))]
+      (if (nil? user-details)
+        (throw (Exception. "Invalid user-id passed in the request"))
+        (assoc valid-payload
+               :from from-timestamp
+               :user_id user-id)))
+    (catch Exception e
+      (ctl/error "Invalid fetch messages request" request-body (ex-message e))
+      (throw (Exception. "Invalid fetch message request")))))

@@ -1,5 +1,6 @@
 (ns utils.convertor-utils
-  (:require [clojure.data.json :as json])
+  (:require [clj-time.coerce :as ctc]
+            [clojure.data.json :as json])
   (:import (org.postgresql.util PGobject)))
 
 
@@ -9,3 +10,9 @@
     (doto (PGobject.)
       (.setType "json")
       (.setValue (json/write-str data)))))
+
+
+(defn millisecond-to-datetime
+  [millisecond]
+  (when millisecond
+    (ctc/from-long millisecond)))
