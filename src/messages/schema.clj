@@ -13,3 +13,10 @@
   SendMessageRequest
   {:message_id sc/Str
    :sender_id  sc/Str})
+
+
+(sc/defschema
+  FetchMessageRequest
+  {:user_id sc/Str
+   :from Long
+   :limit sc/Num})

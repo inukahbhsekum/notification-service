@@ -10,7 +10,10 @@
                 :route-name :create-message-handler]
                ["/send-message"
                 :post [(body-params/body-params) handler/send-message-handler]
-                :route-name :send-message-handler]}))
+                :route-name :send-message-handler]
+               ["/fetch-messages"
+                :get [(body-params/body-params) handler/fetch-message-handler]
+                :route-name :fetch-message-handler]}))
 
 
 (def url-for (route/url-for-routes routes))

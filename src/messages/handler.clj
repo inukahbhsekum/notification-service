@@ -54,3 +54,23 @@
      (let [message (send-message request dependencies)
            response (ur/ok message)]
        (assoc context :response response)))})
+
+
+(defn- fetch-messages
+  [request dependencies]
+  (try
+    (-> {:request-body (:json-params request)
+         :params (:query-params request)}
+        (mv/validate-fetch-message-request dependencies)
+        (mm/fetch-user-pending-messages-paginated dependencies))
+    (catch Exception e
+      (ur/failed (ex-message e)))))
+
+
+(def fetch-message-handler
+  {:name :fetch-message-handler
+   :enter
+   (fn [{:keys [request dependencies] :as context}]
+     (let [messages (fetch-messages request dependencies)
+           response (ur/ok messages)]
+       (assoc context :response response)))})

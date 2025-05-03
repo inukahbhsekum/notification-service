@@ -65,8 +65,8 @@
                                                                   db-pool)
         _ (when (nil? user-topic-details)
             (throw (Exception. "user_id and topic_id should be valid")))
-        pending-user-messages (mm/fetch-user-pending-messages valid-message-payload
-                                                              db-pool)
+        pending-user-messages (mm/fetch-all-user-pending-messages valid-message-payload
+                                                                  db-pool)
         pending-user-messages (if (nil? pending-user-messages)
                                 (mm/fetch-messages-by-topic-id topic-id db-pool)
                                 (->> pending-user-messages
