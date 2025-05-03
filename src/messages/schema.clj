@@ -17,6 +17,7 @@
 
 (sc/defschema
   FetchMessageRequest
-  {:user_id sc/Str
+  {:topic_id sc/Str
    :from Long
-   :limit sc/Num})
+   :limit sc/Num
+   :user_id sc/Str})
