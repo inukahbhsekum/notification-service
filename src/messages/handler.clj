@@ -62,7 +62,7 @@
     (-> {:request-body (:json-params request)
          :params (:query-params request)}
         (mv/validate-fetch-message-request dependencies)
-        (mm/fetch-user-pending-messages-paginated dependencies))
+        (mm/fetch-topic-messages-paginated dependencies))
     (catch Exception e
       (ur/failed (ex-message e)))))
 

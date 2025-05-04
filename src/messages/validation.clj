@@ -61,15 +61,11 @@
   [{:keys [request-body]} dependencies]
   (try
     (let [valid-payload (sc/validate ms/FetchMessageRequest request-body)
-          user-id (:user_id valid-payload)
-          user-details (udm/fetch-user-details user-id
-                                               dependencies)
+          topic-id (:topic_id valid-payload)
           from-timestamp (ucu/millisecond-to-datetime (:from valid-payload))]
-      (if (nil? user-details)
-        (throw (Exception. "Invalid user-id passed in the request"))
-        (assoc valid-payload
-               :from from-timestamp
-               :user_id user-id)))
+      (assoc valid-payload
+             :from from-timestamp
+             :topic_id (UUID/fromString topic-id)))
     (catch Exception e
       (ctl/error "Invalid fetch messages request" request-body (ex-message e))
       (throw (Exception. "Invalid fetch message request")))))
