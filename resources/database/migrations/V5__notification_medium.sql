@@ -11,7 +11,7 @@ create table notification_medium
  updated_at timestamp not null default current_timestamp 
 );
 
-alter table notification_message 
+alter table notification_message
 add column message_medium uuid references notification_medium(medium_id);
 
 create index notification_message_medium_type on notification_message(message_medium);
