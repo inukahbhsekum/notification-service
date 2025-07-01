@@ -1,34 +1,32 @@
-(ns user-details.schema
-  (:require [schema.core :as sc]))
+(ns user-details.schema)
+
+(def UserMetaData
+  [:map
+   [:ip_address string?]
+   [:last_known_location string?]
+   [:last_country string?]
+   [:last_state string?]
+   [:last_city string?]])
 
 
-(sc/defschema
-  UserMetaData
-  {:ip_address          sc/Str
-   :last_known_location sc/Str
-   :last_country        sc/Str
-   :last_state          sc/Str
-   :last_city           sc/Str})
+(def CreateUserRequest
+  [:map
+   [:first_name string?]
+   [:middle_name string?]
+   [:last_name string?]
+   [:user_type [:enum "publisher" "receiver" "manager"]]
+   [:user_metadata UserMetaData]])
 
 
-(sc/defschema
-  CreateUserRequest
-  {:first_name    sc/Str
-   :middle_name   sc/Str
-   :last_name     sc/Str
-   :user_type     (sc/enum "publisher" "receiver" "manager")
-   :user_metadata UserMetaData})
+(def CreateTopicRequest
+  [:map
+   [:title string?]
+   [:description string?]
+   [:user_id string?]])
 
 
-(sc/defschema
-  CreateTopicRequest
-  {:title       sc/Str
-   :description sc/Str
-   :user_id     sc/Str})
-
-
-(sc/defschema
-  CreateTopicUserMappingRequest
-  {:topic-id   sc/Str
-   :user-ids   [sc/Str]
-   :manager-id sc/Str})
+(def CreateTopicUserMappingRequest
+  [:map
+   [:topic-id string?]
+   [:user-ids string?]
+   [:manager-id string?]])

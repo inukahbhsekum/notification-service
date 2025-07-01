@@ -1,10 +1,13 @@
 (ns user-details.validation
   (:require [clojure.tools.logging :as ctl]
-            [schema.core :as sc]
+            [malli.core :as m]
             [user-details.models :as udm]
             [user-details.schema :as uds])
   (:import (java.util UUID)))
 
+(def user-creation-validator (m/validator uds/CreateUserRequest))
+(def topic-creation-validator (m/validator uds/CreateTopicRequest))
+(def user-topic-mapping-validator (m/validator uds/CreateTopicUserMappingRequest))
 
 (defn validate-user-creation-request
   [{:keys [request-body params]}]
@@ -13,10 +16,13 @@
           user-id (if user-id
                     (UUID/fromString user-id)
                     (UUID/randomUUID))
-          valid-payload (sc/validate uds/CreateUserRequest request-body)]
-      (if user-id
-        (assoc valid-payload :user_id user-id)
-        valid-payload))
+          valid? (user-creation-validator request-body)]
+      (when (not valid?)
+        (throw (Exception. "Invalid request payload")))
+      (when valid?
+        (if user-id
+          (assoc request-body :user_id user-id)
+          request-body)))
     (catch Exception e
       (ctl/error "Invalid register user request payload"
                  request-body
@@ -31,13 +37,15 @@
           topic_id (if topic_id
                      (UUID/fromString topic_id)
                      (UUID/randomUUID))
-          valid-payload (sc/validate uds/CreateTopicRequest request-body)
-          user-id (:user_id valid-payload)
+          valid? (topic-creation-validator request-body)
+          _ (when (not valid?)
+              (throw (Exception. "Invalid request payload")))
+          user-id (:user_id request-body)
           user-details (udm/fetch-user-details user-id dependencies)]
       (when (and (not= (:user-type user-details) "manager")
                  (not= (:user-type user-details) "publisher"))
         (throw (Exception. "User should be publisher or manager")))
-      (assoc valid-payload :topic_id topic_id))
+      (assoc request-body :topic_id topic_id))
     (catch Exception e
       (ctl/error "Invalid create topic request payload"
                  request-body
@@ -49,13 +57,14 @@
 (defn validate-topic-user-mapping-request
   [{:keys [request-body] :as request-payload} dependencies]
   (try
-    (let [valid-payload (sc/validate uds/CreateTopicUserMappingRequest
-                                     request-body)
-          user-details (udm/fetch-user-details (:manager-id valid-payload)
+    (let [valid? (user-topic-mapping-validator request-body)
+          _ (when (not valid?)
+              (throw (Exception. "Invalid request body")))
+          user-details (udm/fetch-user-details (:manager-id request-body)
                                                dependencies)]
       (when (not= (:user-type user-details) "manager")
         (throw (Exception. "User should be a manager for creating the mapping")))
-      valid-payload)
+      request-body)
     (catch Exception e
       (ctl/error "Invalid topic user request payload"
                  request-payload
