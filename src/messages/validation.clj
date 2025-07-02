@@ -1,23 +1,28 @@
 (ns messages.validation
   (:require [clojure.tools.logging :as ctl]
             [utils.convertor-utils :as ucu]
+            [malli.core :as mc]
             [messages.models :as mm]
             [messages.schema :as ms]
-            [schema.core :as sc]
             [user-details.models :as udm])
   (:import java.util.UUID))
 
+(def create-message-validator (mc/validator ms/CreateMessageRequest))
+(def send-message-validator (mc/validator ms/SendMessageRequest))
+(def fetch-message-validator (mc/validator ms/FetchMessageRequest))
 
 (defn validate-message-creation-request
   [{:keys [request-body params]} dependencies]
   (try
     (let [user-id (:user_id params)
           user-details (udm/fetch-user-details user-id dependencies)
-          valid-payload (sc/validate ms/CreateMessageRequest request-body)
-          sender-details (udm/fetch-user-details (:sender valid-payload)
+          valid-payload? (create-message-validator request-body)
+          _ (when (not valid-payload?)
+              (throw (Exception. "Invalid create-message payload")))
+          sender-details (udm/fetch-user-details (:sender request-body)
                                                  dependencies)
-          topic-receiver (udm/fetch-notification-topic-receiver (:topic_id valid-payload)
-                                                                (:receiver valid-payload)
+          topic-receiver (udm/fetch-notification-topic-receiver (:topic_id request-body)
+                                                                (:receiver request-body)
                                                                 dependencies)
           invalid-reciever? (nil? topic-receiver)]
       (cond
@@ -27,10 +32,10 @@
         (throw (Exception. "Message can be created by manager or publisher"))
         (not= (:user-type sender-details) "publisher")
         (throw (Exception. "Only publisher can send message"))
-        (empty? (:message_text valid-payload))
+        (empty? (:message_text request-body))
         (throw (Exception. "Message text cannot be empty or null"))
         :else
-        valid-payload))
+        request-body))
     (catch Exception e
       (ctl/error "Invalid create message request" request-body (ex-message e))
       (throw (Exception. "Invalid create message request payload")))))
@@ -39,11 +44,12 @@
 (defn validate-send-message-request
   [{:keys [request-body]} dependencies]
   (try
-    (let [valid-payload (sc/validate ms/SendMessageRequest
-                                     request-body)
-          sender-details (udm/fetch-user-details (:sender_id valid-payload)
+    (let [valid-payload? (send-message-validator request-body)
+          _ (when (not valid-payload?)
+              (throw (Exception. "Invalid send message payload")))
+          sender-details (udm/fetch-user-details (:sender_id request-body)
                                                  dependencies)
-          message-details (mm/fetch-message-by-message-id (:message_id valid-payload))]
+          message-details (mm/fetch-message-by-message-id (:message_id request-body))]
       (cond
         (and (not= (:user-type sender-details) "manager")
              (not= (:user-type sender-details) "publisher"))
@@ -51,7 +57,7 @@
         (nil? message-details)
         (throw (Exception. "Invalid message_id passed"))
         :else
-        (assoc valid-payload :message_details message-details)))
+        (assoc request-body :message_details message-details)))
     (catch Exception e
       (ctl/error "Invalid send message request" request-body (ex-message e))
       (throw (Exception. "Invalid send message request")))))
@@ -60,10 +66,12 @@
 (defn validate-fetch-message-request
   [{:keys [request-body]} dependencies]
   (try
-    (let [valid-payload (sc/validate ms/FetchMessageRequest request-body)
-          topic-id (:topic_id valid-payload)
-          from-timestamp (ucu/millisecond-to-datetime (:from valid-payload))]
-      (assoc valid-payload
+    (let [valid-payload? (fetch-message-validator request-body)
+          _ (when (not valid-payload?)
+              (throw (Exception. "Invalid fetch-message payload")))
+          topic-id (:topic_id request-body)
+          from-timestamp (ucu/millisecond-to-datetime (:from request-body))]
+      (assoc request-body
              :from from-timestamp
              :topic_id (UUID/fromString topic-id)))
     (catch Exception e

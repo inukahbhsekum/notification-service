@@ -1,26 +1,25 @@
-(ns messages.schema
-  (:require [schema.core :as sc]))
+(ns messages.schema)
 
-(def message-medium (sc/enum "websocket" "push_notification" "sms" "whatsapp" "email" "in_app" "message_queue" "webhook"))
+(def message-mediums [:enum "websocket" "push_notification" "sms" "whatsapp" "email" "in_app" "message_queue" "webhook"])
 
-(sc/defschema
-  CreateMessageRequest
-  {:message_text sc/Str
-   :topic_id     sc/Str
-   :sender       sc/Str
-   :receiver     sc/Str
-   :message_medium message-medium})
-
-
-(sc/defschema
-  SendMessageRequest
-  {:message_id sc/Str
-   :sender_id  sc/Str})
+(def CreateMessageRequest
+  [:map
+   [:message_text string?]
+   [:topic_id string?]
+   [:sender string?]
+   [:receiver string?]
+   [:message_medium message-mediums]])
 
 
-(sc/defschema
-  FetchMessageRequest
-  {:topic_id sc/Str
-   :from Long
-   :limit sc/Num
-   :user_id sc/Str})
+(def SendMessageRequest
+  [:map
+   [:message_id string?]
+   [:sender_id string?]])
+
+
+(def FetchMessageRequest
+  [:map
+   [:topic_id string?]
+   [:from long]
+   [:limit int]
+   [:user_id string?]])

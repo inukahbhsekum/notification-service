@@ -2,12 +2,13 @@
   (:require [cheshire.core :as json]
             [clojure.string :as cs]
             [components.database-components :as cdc]
+            [malli.core :as mc]
             [messages.models :as mm]
             [org.httpkit.server :as http]
-            [schema.core :as sc]
             [user-details.models :as udm]
             [websocket.schema :as ws]))
 
+(def websocket-message-validator (mc/validator ws/WebsocketMessagePayload))
 
 (defn- parse-query-params
   [query-string]
@@ -29,9 +30,8 @@
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
         parsed-params (parse-query-params params)
-        valid-message-payload (sc/validate ws/WebsocketMessagePayload
-                                           (assoc parsed-params
-                                                  :type "echo"))
+        valid-message-payload (websocket-message-validator (assoc parsed-params
+                                                                  :type "echo"))
         topic-id (:topic_id valid-message-payload)
         user-topic-details (udm/fetch-notification-topic-receiver topic-id
                                                                   (:user_id valid-message-payload)
@@ -56,9 +56,8 @@
   (let [parsed-params (parse-query-params params)
         db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
-        valid-message-payload (sc/validate ws/WebsocketMessagePayload
-                                           (assoc parsed-params
-                                                  :type "connect"))
+        valid-message-payload (websocket-message-validator (assoc parsed-params
+                                                                  :type "connect"))
         topic-id (:topic_id valid-message-payload)
         user-topic-details (udm/fetch-notification-topic-receiver topic-id
                                                                   (:user_id valid-message-payload)
