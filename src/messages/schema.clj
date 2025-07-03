@@ -20,6 +20,6 @@
 (def FetchMessageRequest
   [:map
    [:topic_id string?]
-   [:from long]
-   [:limit int]
+   [:from int?]
+   [:limit [:and int? [:> 0]]]
    [:user_id string?]])
