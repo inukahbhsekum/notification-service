@@ -109,14 +109,20 @@
 
 (defn update-notification-receivers
   [{:keys [user-ids topic-id]} {:keys [db-pool]}]
-  (try
-    (reduce (fn [success-list user-id]
-              (update-user-topic user-id topic-id db-pool)
-              (conj success-list user-id))
-            []
-            user-ids)
-    (catch Exception e
-      (ctl/error "Users can't be mapped to topic" (ex-message e))
+  (let [update-user-topic (fn [response-map user-id]
+                            (try
+                              (update-user-topic user-id topic-id db-pool)
+                              (update-in response-map [:success] conj user-id)
+                              (catch Exception e
+                                (update-in response-map [:failure] conj user-id)
+                                (update-in response-map [:exceptions] conj e))))
+        update-response-map (reduce update-user-topic
+                                    {:success []
+                                     :failure []
+                                     :exceptions []}
+                                    user-ids)]
+    (when (seq (:failure update-response-map))
+      (ctl/error "Users can't be mapped to topic" (apply str (mapv #(ex-message %) (:exceptions update-response-map))))
       (ur/failed "Users can't be mapped to topic"))))
 
 

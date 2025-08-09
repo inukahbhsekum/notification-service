@@ -28,5 +28,5 @@
 (def CreateTopicUserMappingRequest
   [:map
    [:topic-id string?]
-   [:user-ids string?]
+   [:user-ids [:vector {:min-count 1} string?]]
    [:manager-id string?]])
