@@ -21,7 +21,8 @@
            hikari-cp/hikari-cp               {:mvn/version "3.0.1"}
            org.clojure/data.json             {:mvn/version "2.5.0"}
            http-kit/http-kit                 {:mvn/version "2.6.0"}
-           metosin/malli                     {:mvn/version "0.13.0"}}
+           metosin/malli                     {:mvn/version "0.13.0"}
+           org.apache.kafka/kafka-clients    {:mvn/version "3.7.0"}}
  :aliases {:dev  {:main-opts ["-e" "(require,'dev)"
                               "-e" "(in-ns,'dev)"]}
            :test {:extra-paths ["test"]
