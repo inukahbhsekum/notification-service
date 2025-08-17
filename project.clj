@@ -27,7 +27,8 @@
                  [faker/faker "0.3.2"]
                  [org.clojure/data.json "2.5.0"]
                  [http-kit "2.6.0"]
-                 [metosin/malli "0.13.0"]]
+                 [metosin/malli "0.13.0"]
+                 [org.apache.kafka/kafka-clients "3.7.0"]]
   :main ^:skip-aot core
   :target-path "target/%s"
   :profiles {:uberjar {:aot      :all

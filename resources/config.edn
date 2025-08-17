@@ -10,4 +10,5 @@
                        :host "localhost"
                        :port 5432
                        :user "nsd"
-                       :maximumPoolSize 3}}
+                       :maximumPoolSize 3}
+ :kafka-config {"bootstrap.servers" "localhost:9092"}}
