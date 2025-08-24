@@ -5,7 +5,8 @@
             [components.database-components :as db-component]
             [config :as config]
             [clojure.tools.logging :as ctl]
-            [com.stuartsierra.component :as component]))
+            [com.stuartsierra.component :as component]
+            [components.kafka-components :as ckc]))
 
 
 (defn notification-service-system
@@ -13,6 +14,7 @@
   (component/system-map
    :in-memory-state-component (in-memory-state-component/new-in-memory-state-component config)
    :db-pool (db-component/new-database-component config)
+   :message-producer (ckc/create-producer)
    :user-component (component/using
                     (user-component/new-user-component config)
                     [:db-pool

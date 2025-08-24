@@ -1,15 +1,19 @@
 (ns messages.core
-  (:require [messages.models :as mm]
-            [user-details.models :as udm])
+  (:require [components.kafka-components :as ckc]
+            [config :as config]
+            [messages.models :as mm]
+            [user-details.models :as udm]
+            [utils.function-utils :as ufu])
   (:import [java.util UUID]))
 
 
 (defn send-message
-  [{:keys [request-body]} dependencies]
-  (let [message-id (:message_id request-body)
-        sender_id (:sender_id request-body)
-        message_details (:message_details request-body)]
-    message_details))
+  [{:keys [request-body]} {:keys [message-producer]}]
+  (let [message-id (:message_id request-body)]
+    (ufu/improper-thrush request-body
+                         (partial ckc/send-message message-producer
+                                  (:message-kafka-topic (config/read-config))
+                                  message-id))))
 
 
 (defn update-message-activity-log

@@ -60,7 +60,7 @@
 
 
 (defn fetch-user-pending-messages-for-topic
-  [{:keys [topic_id user_id] :as zmap} {:keys [db-pool]}]
+  [{:keys [topic_id user_id]} {:keys [db-pool]}]
   (try
     (let [query (-> {:select [:*]
                      :from [:user_message_details]
@@ -77,7 +77,7 @@
 
 
 (defn fetch-all-user-pending-messages
-  [{:keys [user_id] :as zmap} {:keys [db-pool]}]
+  [{:keys [user_id]} {:keys [db-pool]}]
   (try
     (let [query (-> {:select [:*]
                      :from [:user_message_details]
@@ -94,7 +94,6 @@
 
 (defn fetch-topic-messages-paginated
   [{:keys [topic_id from limit]
-    :as zmap
     :or {from (ctc/epoch)
          limit 10}}
    {:keys [db-pool]}]
@@ -111,7 +110,6 @@
                                                 {:builder-fn rs/as-unqualified-kebab-maps})]
       pending-topic-messages)
     (catch Exception e
-      (def k e)
       (ctl/error "User messages for user_id in the given timerange not available")
       (throw (Exception. "User messages for user_id in the given timerange not available")))))
 

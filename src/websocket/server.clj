@@ -1,6 +1,5 @@
 (ns websocket.server
   (:require [clojure.tools.logging :as ctl]
-            [config :as config]
             [org.httpkit.server :as http]
             [websocket.handler :as wh]))
 
