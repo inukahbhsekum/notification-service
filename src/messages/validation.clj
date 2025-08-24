@@ -64,7 +64,7 @@
 
 
 (defn validate-fetch-message-request
-  [{:keys [request-body]} dependencies]
+  [{:keys [request-body]} _]
   (try
     (let [valid-payload? (fetch-message-validator request-body)
           _ (when (not valid-payload?)
