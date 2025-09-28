@@ -49,7 +49,7 @@
               (throw (Exception. "Invalid send message payload")))
           sender-details (udm/fetch-user-details (:sender_id request-body)
                                                  dependencies)
-          message-details (mm/fetch-message-by-message-id (:message_id request-body))]
+          message-details (mm/fetch-message-by-message-id (:message_id request-body) dependencies)]
       (cond
         (and (not= (:user-type sender-details) "manager")
              (not= (:user-type sender-details) "publisher"))

@@ -1,6 +1,7 @@
 (ns messages.core
   (:require [components.kafka-components :as ckc]
             [config :as config]
+            [producers.notification-message-producer :as pnmp]
             [messages.models :as mm]
             [user-details.models :as udm]
             [utils.function-utils :as ufu])
@@ -8,10 +9,10 @@
 
 
 (defn send-message
-  [{:keys [request-body]} {:keys [message-producer]}]
+  [{:keys [request-body]} _]
   (let [message-id (:message_id request-body)]
     (ufu/improper-thrush request-body
-                         (partial ckc/send-message message-producer
+                         (partial ckc/send-message (pnmp/message-producer)
                                   (:message-kafka-topic (config/read-config))
                                   message-id))))
 

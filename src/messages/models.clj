@@ -1,7 +1,6 @@
 (ns messages.models
   (:require [clj-time.coerce :as ctco]
             [clj-time.core :as ctc]
-            [clojure.test :refer :all]
             [clojure.tools.logging :as ctl]
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
@@ -71,7 +70,7 @@
                                                      query
                                                      {:builder-fn rs/as-unqualified-kebab-maps})]
       pending-user-topic-messages)
-    (catch Exception e
+    (catch Exception _
       (ctl/error "User messages for topic not available")
       (throw (Exception. "User messages for topic not available")))))
 
@@ -87,7 +86,7 @@
                                                      query
                                                      {:builder-fn rs/as-unqualified-kebab-maps})]
       pending-user-topic-messages)
-    (catch Exception e
+    (catch Exception _
       (ctl/error "User messages for user_id not available")
       (throw (Exception. "User messages for user_id not available")))))
 
@@ -109,7 +108,7 @@
                                                 query
                                                 {:builder-fn rs/as-unqualified-kebab-maps})]
       pending-topic-messages)
-    (catch Exception e
+    (catch Exception _
       (ctl/error "User messages for user_id in the given timerange not available")
       (throw (Exception. "User messages for user_id in the given timerange not available")))))
 
@@ -125,7 +124,7 @@
                                        query
                                        {:builder-fn rs/as-unqualified-kebab-maps})]
       user-messages)
-    (catch Exception e
+    (catch Exception _
       (ctl/error "User messages not available")
       (throw (Exception. "User messages not available")))))
 
@@ -141,7 +140,7 @@
                                            query
                                            {:builder-fn rs/as-unqualified-kebab-maps})]
       user-messages)
-    (catch Exception e
+    (catch Exception _
       (ctl/error "User messages not available")
       (throw (Exception. "User messages not available")))))
 
