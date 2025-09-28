@@ -11,5 +11,11 @@
                        :port 5432
                        :user "nsd"
                        :maximumPoolSize 3}
- :kafka-config {"bootstrap.servers" "localhost:9092"}
- :message-kafka-topic "ns_send_message"}
+ :message-kafka-producer-config {"bootstrap.servers" "localhost:9092"
+                                 ;; setting buffer memory to 20mb
+                                 "buffer.memory" "20484736"}
+ :message-kafka-topic "ns_message"
+ :message-kafka-consumer-config {:bootstrap-servers "localhost:9092"
+                                 :topic-name "ns_message"
+                                 :group-id "ns_message_consumer_group"
+                                 :consumer-poll-time 100}} ;; consumer poll-time in milliseconds

@@ -3,8 +3,7 @@
   (:require [com.stuartsierra.component.repl :as component-repl]
             [config :as config]
             [core :as core]
-            [websocket.server :as wss]
-            [components.kafka-components :as ckc]))
+            [websocket.server :as wss]))
 
 (defonce service-config (config/read-config))
 
@@ -17,5 +16,4 @@
 (defn -main
   []
   (component-repl/reset)
-  (ckc/create-producer)
   (wss/start-websocket-server service-config))

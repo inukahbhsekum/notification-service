@@ -26,7 +26,7 @@
 
 
 (defmethod handle-websocket-message :echo
-  [request channel {:keys [params]}]
+  [_ channel {:keys [params]}]
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
         parsed-params (parse-query-params params)
@@ -52,7 +52,7 @@
 
 
 (defmethod handle-websocket-message :connect
-  [request channel {:keys [params]}]
+  [_ channel {:keys [params]}]
   (let [parsed-params (parse-query-params params)
         db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
@@ -76,9 +76,8 @@
 
 
 (defmethod handle-websocket-message :send
-  [request channel message-payload]
-  (let []
-    (http/send! channel (json/generate-string message-payload))))
+  [_ channel message-payload]
+  (http/send! channel (json/generate-string message-payload)))
 
 
 (defn websocket-handler

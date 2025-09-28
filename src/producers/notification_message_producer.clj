@@ -1,19 +1,16 @@
 (ns producers.notification-message-producer
-  (:gen-class)
-  (:require [nrepl.server :as nrepl]))
+  (:require [components.kafka-components :as ckc]
+            [config :as config]))
 
+(def message-producer nil)
 
-(defonce ^{:doc ""}
-  kafka-producer nil)
-
-
-(defn init-producer
-  "Initialise kafka producer from the config"
-  [{:keys [config opts monitoring]}]
-  (let [monitoring-config ()]))
+(defn create-notification-message-producer
+  [config]
+  (let [producer (ckc/create-producer (:message-kafka-producer-config config))]
+    (alter-var-root #'message-producer (constantly producer))))
 
 
 (defn -main
-  "Eba producer setup"
   []
-  ())
+  (let [service-config (config/read-config)]
+    (create-notification-message-producer service-config)))
