@@ -71,3 +71,24 @@
                  (ex-message e))
       (throw (Exception. (str "Invalid topic user mapping request "
                               (ex-message e)))))))
+
+(comment
+  1. "fetch user from username"
+  2. "encrypt the password"
+  3. "check the equality"
+  4. "update the availability"
+  5. "update the availability atom"
+  6. "update the assignment actions in future if any
+      based on a flag"
+  7. "Update current status in db as well in cache")
+
+(defn user-login-validator
+  [{:keys [request-body] :as request-payload} dependencies]
+  (try
+    (let [valid? ()]
+      request-body)
+    (catch Exception e
+      (ctl/error "Invalid login credentials"
+                 request-payload
+                 (ex-message e))
+      (throw (Exception. (str "Invalid login credentials" (ex-message e)))))))
