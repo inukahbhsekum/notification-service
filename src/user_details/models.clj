@@ -158,3 +158,8 @@
     (catch Exception e
       (ctl/error "Reciever topic mapping does not exist" (ex-message e))
       (ur/not-found (str "Reciever topic mapping does not exist" topic-id receiver-id)))))
+
+
+(defn login-user-context
+  [username pwd {:keys [db-pool]}]
+  ())

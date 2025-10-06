@@ -5,18 +5,21 @@
 
 
 (def routes (route/expand-routes
-              #{["/register-user"
-                 :post [(body-params/body-params) handler/register-user]
-                 :route-name :register-user-handler]
-                ["/fetch-user"
-                 :get [(body-params/body-params) handler/get-user]
-                 :route-name :fetch-user-handler]
-                ["/create-topic"
-                 :post [(body-params/body-params) handler/create-topic]
-                 :route-name :create-topic-handler]
-                ["/create-topic-mapping"
-                 :post [(body-params/body-params) handler/create-topic-user-mapping]
-                 :route-name :create-topic-user-mapping]}))
+             #{["/register-user"
+                :post [(body-params/body-params) handler/register-user]
+                :route-name :register-user-handler]
+               ["/fetch-user"
+                :get [(body-params/body-params) handler/get-user]
+                :route-name :fetch-user-handler]
+               ["/create-topic"
+                :post [(body-params/body-params) handler/create-topic]
+                :route-name :create-topic-handler]
+               ["/create-topic-mapping"
+                :post [(body-params/body-params) handler/create-topic-user-mapping]
+                :route-name :create-topic-user-mapping]
+               ["/login"
+                :post [(body-params/body-params) handler/user-login-context]
+                :route-name :user-login-context]}))
 
 
 (def url-for (route/url-for-routes routes))

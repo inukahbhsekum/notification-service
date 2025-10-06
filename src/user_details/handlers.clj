@@ -86,3 +86,26 @@
                                                              dependencies)
            response (ur/ok topic-user-mapping)]
        (assoc context :response response)))})
+
+
+(defn- login-user-context
+  [request dependencies]
+  (try
+    (-> {:request-body (:json-params request)
+         :params       (:query-params request)}
+        (udv/user-login-validator dependencies)
+        (udm/login-user-context dependencies))
+    (ur/ok "User login success")
+    (catch org.postgresql.util.PSQLException e
+      (ur/failed (ex-message e)))
+    (catch Exception e
+      (ur/failed (ex-message e)))))
+
+
+(def user-login-context
+  {:name :user-login-context
+   :enter
+   (fn [{:keys [request dependencies] :as context}]
+     (let [user-login-response (login-user-context request dependencies)
+           response (ur/ok user-login-response)]
+       (assoc context :response response)))})
