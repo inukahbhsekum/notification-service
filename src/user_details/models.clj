@@ -65,6 +65,18 @@
       (throw (Exception. "Invalid user_id")))))
 
 
+(defn fetch-user-details-from-username
+  [username {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_user]
+                     :where [:= () username]}
+                    (sql/format {:pretty true}))])
+    (catch Exception e
+      ()
+      ())))
+
+
 (defn create-or-update-topic
   [topic-payload {:keys [db-pool]}]
   (let [topic-id (:topic_id topic-payload)

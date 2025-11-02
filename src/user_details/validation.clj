@@ -85,7 +85,9 @@
 (defn user-login-validator
   [{:keys [request-body] :as request-payload} dependencies]
   (try
-    (let [valid? ()]
+    (let [user-details (udm/fetch-user-details (:username request-body)
+                                               dependencies)
+          valid? ()]
       request-body)
     (catch Exception e
       (ctl/error "Invalid login credentials"
