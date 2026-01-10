@@ -1,6 +1,8 @@
 (ns user-details.validation
-  (:require [clojure.tools.logging :as ctl]
+  (:require [buddy.hashers :as hashers]
+            [clojure.tools.logging :as ctl]
             [malli.core :as m]
+            [user-details.factory :refer [logging-alert-decorator]]
             [user-details.models :as udm]
             [user-details.schema :as uds])
   (:import (java.util UUID)))
@@ -8,6 +10,7 @@
 (def user-creation-validator (m/validator uds/CreateUserRequest))
 (def topic-creation-validator (m/validator uds/CreateTopicRequest))
 (def user-topic-mapping-validator (m/validator uds/CreateTopicUserMappingRequest))
+(def user-login-request-validator (m/validator uds/UserLoginRequest))
 
 (defn validate-user-creation-request
   [{:keys [request-body params]}]
@@ -72,25 +75,29 @@
       (throw (Exception. (str "Invalid topic user mapping request "
                               (ex-message e)))))))
 
-(comment
-  1. "fetch user from username"
-  2. "encrypt the password"
-  3. "check the equality"
-  4. "update the availability"
-  5. "update the availability atom"
-  6. "update the assignment actions in future if any
-      based on a flag"
-  7. "Update current status in db as well in cache")
+
+(defn- validate-user-password
+  "It takes the plain password passed during login
+   and validates it as per the password hash provided"
+  [request-plain-password pwd-hash]
+  (hashers/verify request-plain-password pwd-hash))
+
 
 (defn user-login-validator
+  "It validates the user login request and does the following
+   1. Validates the login-request payload as per schema
+   2. Fetches the user-details from the username
+   3. Checks the password in login request against the password
+      in user-details in encrypted format
+   Returns the request-payload on success password validation"
   [{:keys [request-body] :as request-payload} dependencies]
-  (try
-    (let [user-details (udm/fetch-user-details (:username request-body)
-                                               dependencies)
-          valid? ()]
-      request-body)
-    (catch Exception e
-      (ctl/error "Invalid login credentials"
-                 request-payload
-                 (ex-message e))
-      (throw (Exception. (str "Invalid login credentials" (ex-message e)))))))
+  (logging-alert-decorator
+   (let [valid? (user-login-request-validator request-body)
+         user-details (udm/fetch-user-details-from-username (:username request-body)
+                                                            dependencies)
+         pwd-valid? (validate-user-password (:password request-body)
+                                            (:pwd-hash user-details))]
+     (when (or (not valid?) (not pwd-valid?))
+       (throw (Exception. "Invalid login credentials")))
+     (assoc request-payload
+            :user-details user-details))))

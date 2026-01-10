@@ -6,10 +6,14 @@
             [honey.sql :as sql]
             [next.jdbc :as jdbc]
             [next.jdbc.result-set :as rs]
+            [user-details.factory :refer [logging-alert-decorator]]
             [utils.convertor-utils :as ucu]
             [utils.response-utils :as ur])
   (:import (java.util UUID)))
 
+;; This availability atom will store the user
+;; availability as per the activity
+(def availability-atom (atom {}))
 
 (defn create-or-update-user
   [user-payload {:keys [db-pool]}]
@@ -46,35 +50,38 @@
 
 (defn fetch-user-details
   [user-id {:keys [db-pool]}]
-  (try
-    (let [query (-> {:select [:*]
-                     :from   [:notification_user]
-                     :where  [:= :user_id (UUID/fromString user-id)]}
-                    (sql/format {:pretty true}))
-          user-details (jdbc/execute-one! (db-pool)
-                                          query
-                                          {:builder-fn rs/as-unqualified-kebab-maps})]
-      (assoc user-details
-             :user-metadata (-> :user-metadata
-                                user-details
-                                .getValue
-                                json/read-json)
-             :user-id (str (:user-id user-details))))
-    (catch Exception e
-      (ctl/error "User not found " (ex-message e))
-      (throw (Exception. "Invalid user_id")))))
+  (logging-alert-decorator
+   (let [query (-> {:select [:*]
+                    :from   [:notification_user]
+                    :where  [:= :user_id (UUID/fromString user-id)]}
+                   (sql/format {:pretty true}))
+         user-details (jdbc/execute-one! (db-pool)
+                                         query
+                                         {:builder-fn rs/as-unqualified-kebab-maps})]
+     (assoc user-details
+            :user-metadata (-> :user-metadata
+                               user-details
+                               .getValue
+                               json/read-json)
+            :user-id (str (:user-id user-details))))))
 
 
 (defn fetch-user-details-from-username
   [username {:keys [db-pool]}]
-  (try
-    (let [query (-> {:select [:*]
-                     :from [:notification_user]
-                     :where [:= () username]}
-                    (sql/format {:pretty true}))])
-    (catch Exception e
-      ()
-      ())))
+  (logging-alert-decorator
+   (let [query (-> {:select [:*]
+                    :from [:notification_user]
+                    :where [:= :username username]}
+                   (sql/format {:pretty true}))
+         user-details (jdbc/execute-one! (db-pool)
+                                         query
+                                         {:builder-fn rs/as-unqualified-kebab-maps})]
+     (assoc user-details
+            :user-metadata (-> :user-metadata
+                               user-details
+                               .getValue
+                               json/read-json)
+            :user-id (str (:user-id user-details))))))
 
 
 (defn create-or-update-topic
@@ -172,6 +179,32 @@
       (ur/not-found (str "Reciever topic mapping does not exist" topic-id receiver-id)))))
 
 
+(defn update-user-availability
+  [user-id availability-status {:keys [db-pool]}]
+  (logging-alert-decorator
+   (let [query (-> {:update :notification_user_context
+                    :set {:available availability-status
+                          :online availability-status
+                          :updated_at (ctco/to-sql-time (ctc/now))}
+                    :where [:= :user_id (UUID/fromString user-id)]}
+                   (sql/format {:pretty true}))
+         user-details (jdbc/execute-one! (db-pool)
+                                         query
+                                         {:builder-fn rs/as-unqualified-kebab-maps})]
+     (ur/updated user-details))))
+
+
 (defn login-user-context
-  [username pwd {:keys [db-pool]}]
-  ())
+  "It takes the validated user details and updates the availability
+   of the user in the database and the local availability atom"
+  [{:keys [user-details]} conn]
+  (let [user-id (:user_id user-details)]
+    ;; set the availability of the user who
+    ;; logged in to true in the database
+    (update-user-availability user-id
+                              true
+                              conn)
+    ;; set the user availability to true
+    ;; inside the availability atom
+    (reset! availability-atom (assoc @availability-atom
+                                     user-id true))))
