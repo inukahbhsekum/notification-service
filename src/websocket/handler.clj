@@ -33,11 +33,13 @@
         valid-message-payload (websocket-message-validator (assoc parsed-params
                                                                   :type "echo"))
         topic-id (:topic_id valid-message-payload)
+        user-id (:user_id valid-message-payload)
         user-topic-details (udm/fetch-notification-topic-receiver topic-id
-                                                                  (:user_id valid-message-payload)
+                                                                  user-id
                                                                   db-pool)
-        _ (when (nil? user-topic-details)
-            (throw (Exception. "user_id and topic_id should be valid")))
+        user-available? (get @udm/availability-atom user-id false)
+        _ (when (or (nil? user-available?) (nil? user-topic-details))
+            (throw (Exception. "user_id and topic_id should be valid and online")))
         pending-user-messages (mm/fetch-user-pending-messages-for-topic valid-message-payload
                                                                         db-pool)
         pending-user-messages (if (nil? pending-user-messages)
@@ -59,11 +61,13 @@
         valid-message-payload (websocket-message-validator (assoc parsed-params
                                                                   :type "connect"))
         topic-id (:topic_id valid-message-payload)
+        user-id (:user_id valid-message-payload)
         user-topic-details (udm/fetch-notification-topic-receiver topic-id
-                                                                  (:user_id valid-message-payload)
+                                                                  user-id
                                                                   db-pool)
-        _ (when (nil? user-topic-details)
-            (throw (Exception. "user_id and topic_id should be valid")))
+        user-available? (get @udm/availability-atom user-id false)
+        _ (when (or (nil? user-available?) (nil? user-topic-details))
+            (throw (Exception. "user_id and topic_id should be valid and online")))
         pending-user-messages (mm/fetch-all-user-pending-messages valid-message-payload
                                                                   db-pool)
         pending-user-messages (if (nil? pending-user-messages)

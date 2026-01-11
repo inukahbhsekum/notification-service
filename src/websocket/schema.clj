@@ -7,8 +7,3 @@
    [:topic_id string?]
    [:user_id string?]
    [:type websocket-message-type]])
-
-(def EchoMessagePayload
-  [:map
-   [:topic_id string?]
-   [:user_id string?]])
