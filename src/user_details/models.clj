@@ -12,7 +12,8 @@
   (:import (java.util UUID)))
 
 ;; This availability atom will store the user
-;; availability as per the activity
+;; availability as per the activity of the user
+;; on login or logout
 (def availability-atom (atom {}))
 
 (defn create-or-update-user
