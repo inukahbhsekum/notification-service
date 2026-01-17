@@ -18,13 +18,15 @@
         query (-> {:insert-into   [:notification_message]
                    :columns       [:message_id :message_text
                                    :topic_id :created_by
-                                   :created_at :updated_at]
+                                   :created_at :updated_at
+                                   :message_medium]
                    :values        [[message-id
                                     (:message_text message-payload)
                                     topic-id
                                     sender-id
                                     (ctco/to-sql-time (ctc/now))
-                                    (ctco/to-sql-time (ctc/now))]]
+                                    (ctco/to-sql-time (ctc/now))
+                                    (:message_medium message-payload)]]
                    :on-conflict   [:message_id
                                    {:where [:<> :message_id nil]}]
                    :do-update-set {:fields [:message_id
@@ -32,7 +34,8 @@
                                             :topic_id
                                             :created_by
                                             :created_at
-                                            :updated_at]}}
+                                            :updated_at
+                                            :message_medium]}}
                   (sql/format {:pretty true}))
         message-details (jdbc/execute-one! (db-pool)
                                            query
@@ -56,6 +59,22 @@
     (catch Exception e
       (ctl/error "Message not found with the message-id" e)
       (throw (Exception. "Message not found with message-id")))))
+
+
+(defn fetch-message-medium
+  [message_medium {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_medium]
+                     :where [:= :message_id (UUID/fromString message_medium)]}
+                    (sql/format {:pretty true}))
+          medium-details (jdbc/execute-one! (db-pool)
+                                            query
+                                            {:builder-fn rs/as-unqualified-kebab-maps})]
+      medium-details)
+    (catch Exception e
+      (ctl/error "Message medium not found with the message_medium" e)
+      (throw (Exception. "Message medium not found with message_medium")))))
 
 
 (defn fetch-user-pending-messages-for-topic
@@ -151,7 +170,7 @@
         query (-> {:insert-into   [:notification_message_activity_log]
                    :columns       [:id :message_id :topic_id :sender
                                    :receivers :meta :action_taken_at
-                                   :created_at]
+                                   :created_at :message_medium]
                    :values        [[id
                                     (:message_id payload)
                                     (:topic_id payload)
@@ -159,7 +178,8 @@
                                     (sql/call :array (:receivers payload))
                                     (sql-json-> (:meta payload))
                                     (ctco/to-sql-time (ctc/now))
-                                    (ctco/to-sql-time (ctc/now))]]
+                                    (ctco/to-sql-time (ctc/now))
+                                    (:message_medium payload)]]
                    :on-conflict   [:id
                                    {:where [:<> :id nil]}]
                    :do-update-set {:fields [:id
@@ -169,7 +189,8 @@
                                             :receivers
                                             :meta
                                             :action_taken_at
-                                            :created_at]}}
+                                            :created_at
+                                            :message_medium]}}
                   (sql/format {:pretty true}))
         message-details (jdbc/execute-one! (db-pool)
                                            query

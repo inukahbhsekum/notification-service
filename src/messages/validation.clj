@@ -24,7 +24,11 @@
           topic-receiver (udm/fetch-notification-topic-receiver (:topic_id request-body)
                                                                 (:receiver request-body)
                                                                 dependencies)
-          invalid-reciever? (nil? topic-receiver)]
+          invalid-reciever? (nil? topic-receiver)
+          message_medium (mm/fetch-message-medium (:message_medium request-body)
+                                                  dependencies)
+          update-request-body (merge request-body
+                                     {:message_medium (:medium_id message_medium)})]
       (cond
         invalid-reciever?
         (throw (Exception. "Message reciever is not associated with the topic"))
@@ -34,10 +38,14 @@
         (throw (Exception. "Only publisher can send message"))
         (empty? (:message_text request-body))
         (throw (Exception. "Message text cannot be empty or null"))
+        (nil? message_medium)
+        (throw (Exception. "Message medium is not supported"))
         :else
-        request-body))
+        update-request-body))
     (catch Exception e
-      (ctl/error "Invalid create message request" request-body (ex-message e))
+      (ctl/error "Invalid create message request" {:body request-body
+                                                   :error-message (ex-message e)
+                                                   :exception e})
       (throw (Exception. "Invalid create message request payload")))))
 
 

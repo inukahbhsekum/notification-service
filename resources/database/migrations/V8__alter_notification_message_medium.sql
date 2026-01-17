@@ -1,0 +1,1 @@
+alter table notification_medium add UNIQUE (medium_name);
