@@ -29,7 +29,8 @@
                       :message_id (:message_id message-details)
                       :meta {:message_body (:message_text message-details)}
                       :created_at (:created_at message-details)
-                      :receivers receiver-ids}]
+                      :receivers receiver-ids
+                      :message_medium (:message_medium message-details)}]
     (mm/update-message-activity-log activity-log dependencies)))
 
 

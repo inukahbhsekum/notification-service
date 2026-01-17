@@ -1,5 +1,6 @@
 (ns user-details.handlers
-  (:require [user-details.models :as udm]
+  (:require [user-details.factory :refer [logging-alert-decorator]]
+            [user-details.models :as udm]
             [user-details.validation :as udv]
             [utils.response-utils :as ur]))
 
@@ -30,7 +31,9 @@
     (let [user-id (-> request
                       :query-params
                       :user_id)]
-      (udm/fetch-user-details user-id dependencies))
+      ((-> udm/fetch-user-details
+           logging-alert-decorator)
+       user-id dependencies))
     (catch Exception e
       (ur/failed (ex-message e)))))
 

@@ -51,20 +51,19 @@
 
 (defn fetch-user-details
   [user-id {:keys [db-pool]}]
-  (logging-alert-decorator
-   (let [query (-> {:select [:*]
-                    :from   [:notification_user]
-                    :where  [:= :user_id (UUID/fromString user-id)]}
-                   (sql/format {:pretty true}))
-         user-details (jdbc/execute-one! (db-pool)
-                                         query
-                                         {:builder-fn rs/as-unqualified-kebab-maps})]
-     (assoc user-details
-            :user-metadata (-> :user-metadata
-                               user-details
-                               .getValue
-                               json/read-json)
-            :user-id (str (:user-id user-details))))))
+  (let [query (-> {:select [:*]
+                   :from   [:notification_user]
+                   :where  [:= :user_id (UUID/fromString user-id)]}
+                  (sql/format {:pretty true}))
+        user-details (jdbc/execute-one! (db-pool)
+                                        query
+                                        {:builder-fn rs/as-unqualified-kebab-maps})]
+    (assoc user-details
+           :user-metadata (-> :user-metadata
+                              user-details
+                              .getValue
+                              json/read-json)
+           :user-id (str (:user-id user-details)))))
 
 
 (defn fetch-user-details-from-username
