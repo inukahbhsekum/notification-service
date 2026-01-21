@@ -66,15 +66,15 @@
   (try
     (let [query (-> {:select [:*]
                      :from [:notification_medium]
-                     :where [:= :message_id (UUID/fromString message_medium)]}
+                     :where [:= :medium_name message_medium]}
                     (sql/format {:pretty true}))
           medium-details (jdbc/execute-one! (db-pool)
                                             query
                                             {:builder-fn rs/as-unqualified-kebab-maps})]
       medium-details)
     (catch Exception e
-      (ctl/error "Message medium not found with the message_medium" e)
-      (throw (Exception. "Message medium not found with message_medium")))))
+      (ctl/error (str "Message medium not found with the medium " message_medium) e)
+      (throw (Exception. (str "Message medium not found with the medium " message_medium))))))
 
 
 (defn fetch-user-pending-messages-for-topic
