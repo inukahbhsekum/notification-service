@@ -28,7 +28,7 @@
           message_medium (mm/fetch-message-medium (:message_medium request-body)
                                                   dependencies)
           update-request-body (merge request-body
-                                     {:message_medium (:medium_id message_medium)})]
+                                     {:message_medium (:medium-id message_medium)})]
       (cond
         invalid-reciever?
         (throw (Exception. "Message reciever is not associated with the topic"))
