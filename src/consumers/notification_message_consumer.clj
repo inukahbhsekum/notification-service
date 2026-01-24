@@ -10,6 +10,7 @@
 
 (defn create-notification-message-consumer
   [config]
+  (ctl/info "Creating Notification Message Consumer..." config)
   (let [consumer (ckc/create-consumer (:message-kafka-consumer-config config))
         {:keys [topic-name]} (:message-kafka-consumer-config config)]
     (alter-var-root #'consumer-instance (constantly consumer))

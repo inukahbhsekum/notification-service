@@ -1,20 +1,19 @@
 (ns messages.core
-  (:require [components.kafka-components :as ckc]
-            [config :as config]
-            [producers.notification-message-producer :as pnmp]
+  (:require [clojure.data.json :as json]
+            [components.kafka-components :as ckc]
             [messages.models :as mm]
+            [producers.notification-message-producer :as pnmp]
             [user-details.models :as udm]
             [utils.function-utils :as ufu])
   (:import [java.util UUID]))
 
 
 (defn send-message
-  [{:keys [request-body]} _]
-  (let [message-id (:message_id request-body)]
-    (ufu/improper-thrush request-body
-                         (partial ckc/send-message (pnmp/message-producer)
-                                  (:message-kafka-topic (config/read-config))
-                                  message-id))))
+  [{:keys [message_id message_details]} dependencies]
+  (ufu/improper-thrush (json/write-str message_details)
+                       (partial ckc/send-message pnmp/message-producer
+                                (get-in dependencies [:config :message-kafka-topic] "ns_message")
+                                message_id)))
 
 
 (defn update-message-activity-log

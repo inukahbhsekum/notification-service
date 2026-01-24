@@ -43,6 +43,7 @@
         (mc/send-message dependencies)
         (future
           (mc/update-message-activity-log dependencies)))
+    (ur/ok "Message sent successfully")
     (catch Exception e
       (ur/failed (ex-message e)))))
 
