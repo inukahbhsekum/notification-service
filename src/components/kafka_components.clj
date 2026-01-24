@@ -71,6 +71,7 @@
       (let [^ConsumerRecords records (.poll consumer (java.time.Duration/ofMillis consumer-poll-time))]
         (doseq [record records]
           ;; --- YOUR MESSAGE PROCESSING LOGIC HERE ---
+          (ctl/info "Processing message: " record)
           (ctl/log :info
                    (format "Partition: %d, Offset: %d, Key: %s, Value: %s"
                            (.partition record)
