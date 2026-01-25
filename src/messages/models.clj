@@ -77,6 +77,22 @@
       (throw (Exception. (str "Message medium not found with the medium " message_medium))))))
 
 
+(defn fetch-message-medium-by-id
+  [medium_id {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:notification_medium]
+                     :where [:= :id medium_id]}
+                    (sql/format {:pretty true}))
+          medium-details (jdbc/execute-one! (db-pool)
+                                            query
+                                            {:builder-fn rs/as-unqualified-kebab-maps})]
+      medium-details)
+    (catch Exception e
+      (ctl/error (str "Message medium not found with the mediumID " medium_id) e)
+      (throw (Exception. (str "Message medium not found with the mediumID " medium_id))))))
+
+
 (defn fetch-user-pending-messages-for-topic
   [{:keys [topic_id user_id]} {:keys [db-pool]}]
   (try

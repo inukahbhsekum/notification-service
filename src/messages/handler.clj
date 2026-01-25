@@ -34,12 +34,18 @@
        (assoc context :response response)))})
 
 
+(defn- add-message-event-type
+  [payload _]
+  (assoc payload :event_type 0))
+
+
 (defn- send-message
   [request dependencies]
   (try
     (-> {:request-body (:json-params request)
          :params       (:query-params request)}
         (mv/validate-send-message-request dependencies)
+        (add-message-event-type dependencies)
         (mc/send-message dependencies)
         (future
           (mc/update-message-activity-log dependencies)))
