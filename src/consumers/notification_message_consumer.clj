@@ -1,8 +1,10 @@
 (ns consumers.notification-message-consumer
   (:require [clojure.tools.logging :as ctl]
+            [components.database-components :as cdc]
             [components.kafka-components :as ckc]
-            [constants.notification-events :as cne]
             [config :as config]
+            [constants.notification-events :as cne]
+            [messages.models :as mm]
             [websocket.handler :as wh])
   (:import [java.time Duration]
            (org.apache.kafka.clients.consumer ConsumerRecord)))
@@ -14,9 +16,21 @@
     [(key medium_name) (cne/event-type-event-value> event_type)]))
 
 
-(defmethod handle-event [:websocket :send_message]
-  [event]
-  "Implementation pending")
+(defmethod handle-event [:websocket :recieve_message]
+  [{:keys [message_id topic_id] :as event}]
+  (ctl/info "event received-----> " event)
+  (let [db-pool {:db-pool (fn []
+                            (cdc/new-database-pool))}
+        users-message-details (mm/fetch-user-message {:topic_id topic_id
+                                                      :message_id message_id}
+                                                     db-pool)]
+    (doseq [user-message-details users-message-details]
+      (mm/upsert-user-message-details {:message_id message_id
+                                       :user_id (:user_id user-message-details)
+                                       :topic_id topic_id
+                                       :status "received"}
+                                      db-pool)
+      (wh/handle-received-message user-message-details db-pool))))
 
 
 (defmethod handle-event :default
