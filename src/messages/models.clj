@@ -82,7 +82,7 @@
   (try
     (let [query (-> {:select [:*]
                      :from [:notification_medium]
-                     :where [:= :id medium_id]}
+                     :where [:= :medium_id medium_id]}
                     (sql/format {:pretty true}))
           medium-details (jdbc/execute-one! (db-pool)
                                             query
@@ -214,6 +214,23 @@
     (if message-details
       (ur/created payload)
       (ur/failed payload))))
+
+
+(defn fetch-user-message
+  [{:keys [user_id message_id]} {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:user_message_details]
+                     :where [:and [:= :user_id (UUID/fromString user_id)]
+                             [:= :message_id (UUID/fromString message_id)]]}
+                    (sql/format {:pretty true}))
+          user-messages-for-topic (jdbc/execute! (db-pool)
+                                                 query
+                                                 {:builder-fn rs/as-unqualified-kebab-maps})]
+      user-messages-for-topic)
+    (catch Exception _
+      (ctl/error "User messages for user_id and message_id not available")
+      (throw (Exception. "User messages for user_id and message_id not available")))))
 
 
 (defn upsert-user-message-details

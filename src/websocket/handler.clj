@@ -6,7 +6,8 @@
             [messages.models :as mm]
             [org.httpkit.server :as http]
             [user-details.models :as udm]
-            [websocket.schema :as ws]))
+            [websocket.schema :as ws]
+            [clojure.tools.logging :as ctl]))
 
 (def websocket-message-validator (mc/validator ws/WebsocketMessagePayload))
 
@@ -111,3 +112,14 @@
                                   (http/send! channel
                                               (json/generate-string {:message-body (str "disconnected" error)
                                                                      :type "connect"})))})))
+
+
+(defn handle-received-message
+  [{:keys [user_id message_id]} dependencies]
+  (let [user-available? (get @udm/availability-atom user_id false)]
+    (if (nil? user-available?)
+      (ctl/warn "User not online" {})
+      (mm/upsert-user-message-details {:user_id user_id
+                                       :message_id message_id
+                                       :status "read"}
+                                      dependencies))))
