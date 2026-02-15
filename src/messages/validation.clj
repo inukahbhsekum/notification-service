@@ -59,8 +59,10 @@
                                                  dependencies)
           message-details (mm/fetch-message-by-message-id (:message_id request-body)
                                                           dependencies)
-          message-medium (mm/fetch-message-medium-by-id (:message_medium message-details)
-                                                        dependencies)]
+          message-medium (mm/fetch-message-medium-by-id (:message-medium message-details)
+                                                        dependencies)
+          message-details (assoc message-details
+                                 :medium-name (:medium-name message-medium))]
       (cond
         (and (not= (:user-type sender-details) "manager")
              (not= (:user-type sender-details) "publisher"))
@@ -69,8 +71,7 @@
         (throw (Exception. "Invalid message_id passed"))
         :else
         (assoc request-body
-               :message_details (assoc message-details
-                                       :medium_name (:medium_name message-medium)))))
+               :message_details message-details)))
     (catch Exception e
       (ctl/error "Invalid send message request" request-body (ex-message e))
       (throw (Exception. "Invalid send message request")))))

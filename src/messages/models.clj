@@ -82,7 +82,7 @@
   (try
     (let [query (-> {:select [:*]
                      :from [:notification_medium]
-                     :where [:= :id medium_id]}
+                     :where [:= :medium_id medium_id]}
                     (sql/format {:pretty true}))
           medium-details (jdbc/execute-one! (db-pool)
                                             query

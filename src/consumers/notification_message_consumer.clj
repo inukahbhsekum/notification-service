@@ -1,5 +1,6 @@
 (ns consumers.notification-message-consumer
   (:require [clojure.tools.logging :as ctl]
+            [clojure.walk :refer [keywordize-keys]]
             [components.database-components :as cdc]
             [components.kafka-components :as ckc]
             [config :as config]
@@ -12,13 +13,12 @@
 (def consumer-instance nil)
 
 (defmulti handle-event
-  (fn [{:keys [medium_name event_type]}]
-    [(key medium_name) (cne/event-type-event-value> event_type)]))
+  (fn [{:keys [medium-name event_type]}]
+    [(keyword medium-name) (cne/event-type-event-value> event_type)]))
 
 
 (defmethod handle-event [:websocket :recieve_message]
   [{:keys [message_id topic_id] :as event}]
-  (ctl/info "event received-----> " event)
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
         users-message-details (mm/fetch-user-message {:topic_id topic_id
@@ -46,12 +46,9 @@
     (while true
       (let [records (.poll consumer (Duration/ofMillis 1000))]
         (doseq [^ConsumerRecord record records]
-          (ctl/info "consumer record ----->"
-                    {"Key:" (.key record)
-                     "Value:" (.value record)
-                     "Partition:" (.partition record)
-                     "Offset:" (.offset record)})
-          (handle-event (.value record)))))
+          (-> (.value record)
+              keywordize-keys
+              handle-event))))
     consumer-instance))
 
 
