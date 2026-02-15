@@ -23,8 +23,7 @@
                             (cdc/new-database-pool))}
         users-message-details (mm/fetch-user-message {:topic_id topic_id
                                                       :message_id message_id}
-                                                     db-pool)
-        _ (def umd users-message-details)]
+                                                     db-pool)]
     (doseq [user-message-details users-message-details]
       (mm/upsert-user-message-details {:message_id message_id
                                        :user_id (:user_id user-message-details)
