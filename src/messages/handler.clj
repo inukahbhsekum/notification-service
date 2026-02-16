@@ -36,7 +36,7 @@
 
 (defn- add-message-event-type
   [payload _]
-  (assoc payload :event_type 0))
+  (assoc-in payload [:message_details :event-type] 0))
 
 
 (defn- send-message

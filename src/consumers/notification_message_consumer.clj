@@ -11,48 +11,72 @@
            (org.apache.kafka.clients.consumer ConsumerRecord)))
 
 (def consumer-instance nil)
+(defonce consumer-thread (atom nil))
 
 (defmulti handle-event
-  (fn [{:keys [medium-name event_type]}]
-    [(keyword medium-name) (cne/event-type-event-value> event_type)]))
+  (fn [{:strs [medium-name] :as event}]
+    (ctl/info "------> info" event)
+    [(keyword medium-name) (-> (:event-type event)
+                               cne/event-type-event-value>)]))
 
 
 (defmethod handle-event [:websocket :recieve_message]
-  [{:keys [message_id topic_id] :as event}]
+  [{:strs [message_id topic_id] :as event}]
+  (ctl/info "----->" event)
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
-        users-message-details (mm/fetch-user-message {:topic_id topic_id
-                                                      :message_id message_id}
-                                                     db-pool)]
-    (doseq [user-message-details users-message-details]
-      (mm/upsert-user-message-details {:message_id message_id
-                                       :user_id (:user_id user-message-details)
-                                       :topic_id topic_id
-                                       :status "received"}
-                                      db-pool)
-      (wh/handle-received-message user-message-details db-pool))))
+        user-message (mm/fetch-user-message {:topic_id topic_id
+                                             :message_id message_id}
+                                            db-pool)]
+    (mm/upsert-user-message-details {:message_id message_id
+                                     :user_id (:user-id user-message)
+                                     :topic_id topic_id
+                                     :status "received"}
+                                    db-pool)
+    (wh/handle-received-message user-message db-pool)))
 
 
 (defmethod handle-event :default
-  [_]
-  (ctl/error "Invalid event-type"))
+  [event]
+  (ctl/error "Invalid event-type" event))
 
 
-(defn create-notification-message-consumer
-  [config]
-  (ctl/info "Creating Notification Message Consumer..." config)
-  (let [consumer (ckc/create-consumer (:message-kafka-consumer-config config))]
-    (alter-var-root #'consumer-instance (constantly consumer))
+(defn start-consuming!
+  []
+  (try
     (while true
-      (let [records (.poll consumer (Duration/ofMillis 1000))]
+      (let [records (.poll consumer-instance (Duration/ofMillis 1000))]
         (doseq [^ConsumerRecord record records]
+          (ctl/info "Record received: " (.value record))
           (-> (.value record)
-              keywordize-keys
               handle-event))))
-    consumer-instance))
+    (catch Exception e
+      (ctl/info "Exception while starting the consumer" (.getMessage e)))
+    (finally
+      (.close consumer-instance))))
+
+
+(defn close-notification-consumer!
+  []
+  (when-let [t @consumer-thread]
+    (ctl/info "Stopping notification-consumer ...")
+    (.wakeup (:consumer t))
+    (reset! consumer-thread nil)))
 
 
 (defn -main
   []
-  (let [service-config (config/read-config)]
-    (create-notification-message-consumer service-config)))
+  (let [config (config/read-config)
+        consumer (ckc/create-consumer (:message-kafka-consumer-config config))]
+    (alter-var-root #'consumer-instance (constantly consumer))
+    (.addShutdownHook (Runtime/getRuntime)
+                      (Thread. close-notification-consumer!))
+    (let [t (Thread. (fn []
+                       (try
+                         (start-consuming!)
+                         (catch org.apache.kafka.common.errors.WakeupException e
+                           (ctl/info "Consumer woke up for shutdown."
+                                     (.getMessage e))))))]
+      (reset! consumer-thread {:thread t :consumer consumer})
+      (.start t)
+      (ctl/info "Consumer started in background. REPL is free!"))))
