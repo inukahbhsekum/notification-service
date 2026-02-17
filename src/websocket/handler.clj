@@ -1,13 +1,13 @@
 (ns websocket.handler
   (:require [cheshire.core :as json]
             [clojure.string :as cs]
+            [clojure.tools.logging :as ctl]
             [components.database-components :as cdc]
             [malli.core :as mc]
             [messages.models :as mm]
             [org.httpkit.server :as http]
             [user-details.models :as udm]
-            [websocket.schema :as ws]
-            [clojure.tools.logging :as ctl]))
+            [websocket.schema :as ws]))
 
 (def websocket-message-validator (mc/validator ws/WebsocketMessagePayload))
 
@@ -115,11 +115,15 @@
 
 
 (defn handle-received-message
-  [{:keys [user_id message_id]} dependencies]
-  (let [user-available? (get @udm/availability-atom user_id false)]
+  [{:keys [user-id message-id topic-id]} dependencies]
+  (let [str-user-id (str user-id)
+        user-available? (get @udm/availability-atom
+                             str-user-id
+                             false)]
     (if (nil? user-available?)
       (ctl/warn "User not online" {})
-      (mm/upsert-user-message-details {:user_id user_id
-                                       :message_id message_id
+      (mm/upsert-user-message-details {:user_id str-user-id
+                                       :message_id (str message-id)
+                                       :topic_id (str topic-id)
                                        :status "read"}
                                       dependencies))))
