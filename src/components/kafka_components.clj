@@ -2,7 +2,7 @@
   (:require [clojure.tools.logging :as ctl])
   (:import (java.util Properties)
            (java.util Properties Collections)
-           (org.apache.kafka.clients.consumer ConsumerConfig KafkaConsumer Consumer ConsumerRecords)
+           (org.apache.kafka.clients.consumer ConsumerConfig KafkaConsumer)
            (org.apache.kafka.clients.producer Callback KafkaProducer ProducerRecord)
            (org.apache.kafka.common.serialization StringSerializer)))
 

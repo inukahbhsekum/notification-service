@@ -237,8 +237,8 @@
   [payload {:keys [db-pool]}]
   (let [query (-> {:insert-into   [:user_message_details]
                    :columns       [:user_id :message_id :topic_id :status]
-                   :values        [[(:user_id payload)
-                                    (:message_id payload)
+                   :values        [[(UUID/fromString (:user_id payload))
+                                    (UUID/fromString (:message_id payload))
                                     (UUID/fromString (:topic_id payload))
                                     [:cast (:status payload) :message_status]]]}
                   (sql/format {:pretty true}))
@@ -248,3 +248,23 @@
     (if message-details
       (ur/created payload)
       (ur/failed payload))))
+
+
+(defn fetch-user-message-details
+  [{:keys [topic_id message_id]} {:keys [db-pool]}]
+  (try
+    (let [query (-> {:select [:*]
+                     :from [:user_message_details]
+                     :where [:and
+                             [:= :topic_id (UUID/fromString topic_id)]
+                             [:= :message_id (UUID/fromString message_id)]]}
+                    (sql/format {:pretty true}))
+          user-message-for-topic (jdbc/execute-one! (db-pool)
+                                                    query
+                                                    {:builder-fn rs/as-unqualified-kebab-maps})]
+      user-message-for-topic)
+    (catch Exception e
+      (ctl/info "-----> " {:exception-message (.getMessage e)
+                           :exception e})
+      (ctl/error "User messages for topic_id and message_id not available")
+      (throw (Exception. "User messages for topic_id and message_id not available")))))

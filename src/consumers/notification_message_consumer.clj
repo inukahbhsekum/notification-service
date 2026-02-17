@@ -1,5 +1,6 @@
 (ns consumers.notification-message-consumer
-  (:require [clojure.tools.logging :as ctl]
+  (:require [clojure.data.json :as json]
+            [clojure.tools.logging :as ctl]
             [clojure.walk :refer [keywordize-keys]]
             [components.database-components :as cdc]
             [components.kafka-components :as ckc]
@@ -14,31 +15,39 @@
 (defonce consumer-thread (atom nil))
 
 (defmulti handle-event
-  (fn [{:strs [medium-name] :as event}]
-    (ctl/info "------> info" event)
-    [(keyword medium-name) (-> (:event-type event)
+  (fn [{:keys [medium-name event-type]}]
+    [(keyword medium-name) (-> event-type
                                cne/event-type-event-value>)]))
 
 
 (defmethod handle-event [:websocket :recieve_message]
-  [{:strs [message_id topic_id] :as event}]
-  (ctl/info "----->" event)
+  [{:keys [message-id topic-id]}]
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
-        user-message (mm/fetch-user-message {:topic_id topic_id
-                                             :message_id message_id}
-                                            db-pool)]
-    (mm/upsert-user-message-details {:message_id message_id
-                                     :user_id (:user-id user-message)
-                                     :topic_id topic_id
-                                     :status "received"}
-                                    db-pool)
-    (wh/handle-received-message user-message db-pool)))
+        user-message (mm/fetch-user-message-details {:topic_id topic-id
+                                                     :message_id message-id}
+                                                    db-pool)
+        user-message-status (:status user-message)]
+    (cond
+      (= user-message-status "recieved")
+      (ctl/error "message already recieved")
+      (= user-message-status "read")
+      (ctl/error "message is already read")
+      :else
+      (do
+        (mm/upsert-user-message-details {:message_id (str message-id)
+                                         :user_id (-> :user-id
+                                                      user-message
+                                                      str)
+                                         :topic_id (str topic-id)
+                                         :status "recieved"}
+                                        db-pool)
+        (wh/handle-received-message user-message db-pool)))))
 
 
 (defmethod handle-event :default
-  [event]
-  (ctl/error "Invalid event-type" event))
+  [{:keys [event-type]}]
+  (ctl/error "Invalid event-type" event-type))
 
 
 (defn start-consuming!
@@ -47,8 +56,9 @@
     (while true
       (let [records (.poll consumer-instance (Duration/ofMillis 1000))]
         (doseq [^ConsumerRecord record records]
-          (ctl/info "Record received: " (.value record))
           (-> (.value record)
+              json/read-str
+              keywordize-keys
               handle-event))))
     (catch Exception e
       (ctl/info "Exception while starting the consumer" (.getMessage e)))
