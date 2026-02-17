@@ -1,5 +1,6 @@
 (ns consumers.notification-message-consumer
-  (:require [clojure.tools.logging :as ctl]
+  (:require [clojure.data.json :as json]
+            [clojure.tools.logging :as ctl]
             [clojure.walk :refer [keywordize-keys]]
             [components.database-components :as cdc]
             [components.kafka-components :as ckc]
@@ -11,48 +12,75 @@
            (org.apache.kafka.clients.consumer ConsumerRecord)))
 
 (def consumer-instance nil)
+(defonce consumer-thread (atom nil))
 
 (defmulti handle-event
-  (fn [{:keys [medium-name event_type]}]
-    [(keyword medium-name) (cne/event-type-event-value> event_type)]))
+  (fn [{:keys [medium-name event-type]}]
+    [(keyword medium-name) (-> event-type
+                               cne/event-type-event-value>)]))
 
 
 (defmethod handle-event [:websocket :recieve_message]
-  [{:keys [message_id topic_id] :as event}]
+  [{:keys [message-id topic-id]}]
   (let [db-pool {:db-pool (fn []
                             (cdc/new-database-pool))}
-        users-message-details (mm/fetch-user-message {:topic_id topic_id
-                                                      :message_id message_id}
-                                                     db-pool)]
-    (doseq [user-message-details users-message-details]
-      (mm/upsert-user-message-details {:message_id message_id
-                                       :user_id (:user_id user-message-details)
-                                       :topic_id topic_id
-                                       :status "received"}
-                                      db-pool)
-      (wh/handle-received-message user-message-details db-pool))))
+        user-message (mm/fetch-user-message-details {:topic_id topic-id
+                                                     :message_id message-id}
+                                                    db-pool)]
+    ;; validation required here
+    (mm/upsert-user-message-details {:message_id (str message-id)
+                                     :user_id (-> :user-id
+                                                  user-message
+                                                  str)
+                                     :topic_id (str topic-id)
+                                     :status "recieved"}
+                                    db-pool)
+    (wh/handle-received-message user-message db-pool)))
 
 
 (defmethod handle-event :default
-  [_]
-  (ctl/error "Invalid event-type"))
+  [{:keys [event-type]}]
+  (ctl/error "Invalid event-type" event-type))
 
 
-(defn create-notification-message-consumer
-  [config]
-  (ctl/info "Creating Notification Message Consumer..." config)
-  (let [consumer (ckc/create-consumer (:message-kafka-consumer-config config))]
-    (alter-var-root #'consumer-instance (constantly consumer))
+(defn start-consuming!
+  []
+  (try
     (while true
-      (let [records (.poll consumer (Duration/ofMillis 1000))]
+      (let [records (.poll consumer-instance (Duration/ofMillis 1000))]
         (doseq [^ConsumerRecord record records]
+          (ctl/info "Record received: " (.value record))
           (-> (.value record)
+              json/read-str
               keywordize-keys
               handle-event))))
-    consumer-instance))
+    (catch Exception e
+      (ctl/info "Exception while starting the consumer" (.getMessage e)))
+    (finally
+      (.close consumer-instance))))
+
+
+(defn close-notification-consumer!
+  []
+  (when-let [t @consumer-thread]
+    (ctl/info "Stopping notification-consumer ...")
+    (.wakeup (:consumer t))
+    (reset! consumer-thread nil)))
 
 
 (defn -main
   []
-  (let [service-config (config/read-config)]
-    (create-notification-message-consumer service-config)))
+  (let [config (config/read-config)
+        consumer (ckc/create-consumer (:message-kafka-consumer-config config))]
+    (alter-var-root #'consumer-instance (constantly consumer))
+    (.addShutdownHook (Runtime/getRuntime)
+                      (Thread. close-notification-consumer!))
+    (let [t (Thread. (fn []
+                       (try
+                         (start-consuming!)
+                         (catch org.apache.kafka.common.errors.WakeupException e
+                           (ctl/info "Consumer woke up for shutdown."
+                                     (.getMessage e))))))]
+      (reset! consumer-thread {:thread t :consumer consumer})
+      (.start t)
+      (ctl/info "Consumer started in background. REPL is free!"))))
