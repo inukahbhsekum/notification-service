@@ -26,16 +26,23 @@
                             (cdc/new-database-pool))}
         user-message (mm/fetch-user-message-details {:topic_id topic-id
                                                      :message_id message-id}
-                                                    db-pool)]
-    ;; validation required here
-    (mm/upsert-user-message-details {:message_id (str message-id)
-                                     :user_id (-> :user-id
-                                                  user-message
-                                                  str)
-                                     :topic_id (str topic-id)
-                                     :status "recieved"}
-                                    db-pool)
-    (wh/handle-received-message user-message db-pool)))
+                                                    db-pool)
+        user-message-status (:status user-message)]
+    (cond
+      (= user-message-status "recieved")
+      (ctl/error "message already recieved")
+      (= user-message-status "read")
+      (ctl/error "message is already read")
+      :else
+      (do
+        (mm/upsert-user-message-details {:message_id (str message-id)
+                                         :user_id (-> :user-id
+                                                      user-message
+                                                      str)
+                                         :topic_id (str topic-id)
+                                         :status "recieved"}
+                                        db-pool)
+        (wh/handle-received-message user-message db-pool)))))
 
 
 (defmethod handle-event :default
@@ -49,7 +56,6 @@
     (while true
       (let [records (.poll consumer-instance (Duration/ofMillis 1000))]
         (doseq [^ConsumerRecord record records]
-          (ctl/info "Record received: " (.value record))
           (-> (.value record)
               json/read-str
               keywordize-keys
