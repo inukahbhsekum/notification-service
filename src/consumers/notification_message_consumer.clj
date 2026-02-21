@@ -6,13 +6,11 @@
             [components.kafka-components :as ckc]
             [config :as config]
             [constants.notification-events :as cne]
+            [consumers.factory :as cf]
             [messages.models :as mm]
             [websocket.handler :as wh])
   (:import [java.time Duration]
            (org.apache.kafka.clients.consumer ConsumerRecord)))
-
-(def consumer-instance nil)
-(defonce consumer-thread (atom nil))
 
 (defmulti handle-event
   (fn [{:keys [medium-name event-type]}]
@@ -49,44 +47,62 @@
   [{:keys [event-type]}]
   (ctl/error "Invalid event-type" event-type))
 
-
-(defn start-consuming!
-  []
-  (try
-    (while true
-      (let [records (.poll consumer-instance (Duration/ofMillis 1000))]
-        (doseq [^ConsumerRecord record records]
-          (-> (.value record)
-              json/read-str
-              keywordize-keys
-              handle-event))))
-    (catch Exception e
-      (ctl/info "Exception while starting the consumer" (.getMessage e)))
-    (finally
-      (.close consumer-instance))))
+;; ---------------------------------------------------------------------||------------------------------------------------------------------------------||
+;; ---------------------------------------------------------------------||------------------------------------------------------------------------------||
 
 
-(defn close-notification-consumer!
-  []
-  (when-let [t @consumer-thread]
-    (ctl/info "Stopping notification-consumer ...")
-    (.wakeup (:consumer t))
-    (reset! consumer-thread nil)))
+(defrecord NotificationConsumer [config state]
+  cf/KafkaConsumer
+  (start-consumer
+    [this]
+    (let [consumer-instance
+          (ckc/create-consumer (:message-kafka-consumer-config config))]
+      (ctl/info "Consumer started in background. REPL is free!")
+      (.addShutdownHook (Runtime/getRuntime)
+                        (Thread. (fn []
+                                   (ctl/info "Shutdown hook triggered,
+                                             closing notification-consumer..")
+                                   (.wakeup consumer-instance)
+                                   (assoc this
+                                          :consumer-thread nil))))
+      (reset! state {:consumer consumer-instance})
+      (-> (Thread. (fn []
+                     (try
+                       (cf/handle-consumer-event this)
+                       (catch org.apache.kafka.common.errors.WakeupException e
+                         (ctl/info "Consumer woke up for shutdown."
+                                   (.getMessage e))))))
+          (.start))))
+
+
+  (stop-consumer
+    [this]
+    (when-let [consumer (:consumer @state)]
+      (ctl/info "Stopping notification-consumer ...")
+      (.wakeup consumer)
+      (reset! state nil)))
+
+
+  (handle-consumer-event
+    [this]
+    (try
+      (while true
+        (let [consumer-instance (:consumer @state)
+              records (.poll consumer-instance (Duration/ofMillis 1000))]
+          (doseq [^ConsumerRecord record records]
+            (-> (.value record)
+                json/read-str
+                keywordize-keys
+                handle-event))))
+      (catch Exception e
+        (ctl/info "Exception while starting the consumer" (.getMessage e)))
+      (finally
+        (.close (:consumer @state))
+        (reset! state nil)))))
 
 
 (defn -main
   []
-  (let [config (config/read-config)
-        consumer (ckc/create-consumer (:message-kafka-consumer-config config))]
-    (alter-var-root #'consumer-instance (constantly consumer))
-    (.addShutdownHook (Runtime/getRuntime)
-                      (Thread. close-notification-consumer!))
-    (let [t (Thread. (fn []
-                       (try
-                         (start-consuming!)
-                         (catch org.apache.kafka.common.errors.WakeupException e
-                           (ctl/info "Consumer woke up for shutdown."
-                                     (.getMessage e))))))]
-      (reset! consumer-thread {:thread t :consumer consumer})
-      (.start t)
-      (ctl/info "Consumer started in background. REPL is free!"))))
+  (let [config (config/read-config)]
+    (->NotificationConsumer config
+                            (atom nil))))

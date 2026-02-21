@@ -10,17 +10,16 @@
 (defn inject-dependencies
   [dependencies]
   (interceptor/interceptor
-    {:name  ::inject-dependencies
-     :enter (fn [context]
-              (assoc context :dependencies dependencies))}))
+   {:name  ::inject-dependencies
+    :enter (fn [context]
+             (assoc context :dependencies dependencies))}))
 
 
 (def content-negotiation-interceptor
   (content-negotiation/negotiate-content ["application/json"]))
 
 
-(defrecord MessageComponent
-  [config db-pool in-memory-state-component]
+(defrecord MessageComponent [config db-pool in-memory-state-component]
   component/Lifecycle
 
   (start [component]
