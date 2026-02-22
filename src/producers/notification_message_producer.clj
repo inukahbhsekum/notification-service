@@ -1,16 +1,53 @@
 (ns producers.notification-message-producer
-  (:require [components.kafka-components :as ckc]
-            [config :as config]))
+  (:require [clojure.tools.logging :as ctl]
+            [config :as config]
+            [producers.factory :as pf])
+  (:import (java.util Properties)
+           (org.apache.kafka.clients.producer Callback KafkaProducer ProducerRecord)
+           (org.apache.kafka.common.serialization StringSerializer)))
 
-(def message-producer nil)
+(defrecord NotificationProducer [config state]
+  pf/KafkaProducer
+  (start-producer
+    [this]
+    (let [producer
+          (KafkaProducer. (doto (Properties.)
+                            (.putAll (merge config
+                                            {"key.serializer"   StringSerializer
+                                             "value.serializer" StringSerializer}))))]
+      (reset! state {:producer producer})))
 
-(defn create-notification-message-producer
-  [config]
-  (let [producer (ckc/create-producer (:message-kafka-producer-config config))]
-    (alter-var-root #'message-producer (constantly producer))))
+  (stop-producer
+    [this]
+    (ctl/info "Closing producer...")
+    (.close (get-in @state [:producer])))
+
+  (send-event
+    [this topic key value]
+    (let [record (ProducerRecord. topic key value)
+          _ (ctl/info "new record" record)
+          producer (:producer @(:state this))
+          _ (ctl/info "new producer" producer)]
+      (.send producer record
+             (reify Callback
+               (onCompletion [_ metadata exception]
+                 (if (some? exception)
+                   (ctl/info (str "Error sending message: " (.getMessage exception)))
+                   (ctl/info (str "Successfully sent message to topic " (.topic metadata)
+                                  " at partition " (.partition metadata)
+                                  " with offset " (.offset metadata)))))))
+      (.flush producer))))
+
+
+(defn init-producer
+  [service-config]
+  (let [producer-instance (-> (:message-kafka-producer-config service-config)
+                              (->NotificationProducer (atom {})))]
+    (pf/start-producer producer-instance)
+    producer-instance))
 
 
 (defn -main
   []
   (let [service-config (config/read-config)]
-    (create-notification-message-producer service-config)))
+    (init-producer service-config)))
