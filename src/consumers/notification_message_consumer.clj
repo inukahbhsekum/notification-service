@@ -3,14 +3,17 @@
             [clojure.tools.logging :as ctl]
             [clojure.walk :refer [keywordize-keys]]
             [components.database-components :as cdc]
-            [components.kafka-components :as ckc]
             [config :as config]
             [constants.notification-events :as cne]
             [consumers.factory :as cf]
             [messages.models :as mm]
             [websocket.handler :as wh])
-  (:import [java.time Duration]
-           (org.apache.kafka.clients.consumer ConsumerRecord)))
+  (:import (java.util Properties)
+           (java.util Collections Properties)
+           (org.apache.kafka.clients.consumer ConsumerConfig
+                                              ConsumerRecord
+                                              KafkaConsumer)
+           (java.time Duration)))
 
 (defmulti handle-event
   (fn [{:keys [medium-name event-type]}]
@@ -50,22 +53,27 @@
 ;; ---------------------------------------------------------------------||------------------------------------------------------------------------------||
 ;; ---------------------------------------------------------------------||------------------------------------------------------------------------------||
 
-
 (defrecord NotificationConsumer [config state]
   cf/KafkaConsumer
   (start-consumer
     [this]
-    (let [consumer-instance
-          (ckc/create-consumer (:message-kafka-consumer-config config))]
+    (let [props (Properties.)]
+      (.put props ConsumerConfig/BOOTSTRAP_SERVERS_CONFIG (:bootstrap-servers config))
+      (.put props ConsumerConfig/GROUP_ID_CONFIG (:group-id config))
+      (.put props ConsumerConfig/KEY_DESERIALIZER_CLASS_CONFIG
+            "org.apache.kafka.common.serialization.StringDeserializer")
+      (.put props ConsumerConfig/VALUE_DESERIALIZER_CLASS_CONFIG
+            "org.apache.kafka.common.serialization.StringDeserializer")
+      (let [consumer (KafkaConsumer. props)]
+        (.subscribe consumer (Collections/singletonList (:topic-name config)))
+        (reset! state {:consumer consumer}))
       (ctl/info "Consumer started in background. REPL is free!")
       (.addShutdownHook (Runtime/getRuntime)
                         (Thread. (fn []
                                    (ctl/info "Shutdown hook triggered,
-                                             closing notification-consumer..")
-                                   (.wakeup consumer-instance)
-                                   (assoc this
-                                          :consumer-thread nil))))
-      (reset! state {:consumer consumer-instance})
+                                              closing notification-consumer..")
+                                   (.wakeup (:consumer @state))
+                                   (reset! state nil))))
       (-> (Thread. (fn []
                      (try
                        (cf/handle-consumer-event this)
