@@ -19,7 +19,7 @@
 
 (defn stop-websocket-server
   []
-  (when @server
-    (@server)
+  (when-let [stop-fn @server]
+    (stop-fn)
     (reset! server nil)
     (ctl/info "WebSocket server stopped")))
