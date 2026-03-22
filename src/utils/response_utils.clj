@@ -1,5 +1,5 @@
 (ns utils.response-utils
-  (:require [clojure.data.json :as json]))
+  (:require [clojure.walk :as walk]))
 
 
 (defn response
@@ -8,7 +8,7 @@
   ([status body]
    {:status  status
     :headers {"Content-type" "application/json"}
-    :body    (json/write-str body)}))
+    :body    (walk/stringify-keys body)}))
 
 
 (def ok (partial response 200))

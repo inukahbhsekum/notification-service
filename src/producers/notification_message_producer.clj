@@ -1,33 +1,38 @@
 (ns producers.notification-message-producer
   (:require [clojure.tools.logging :as ctl]
-            [config :as config]
-            [producers.factory :as pf])
+            [com.stuartsierra.component :as component])
   (:import (java.util Properties)
-           (org.apache.kafka.clients.producer Callback KafkaProducer ProducerRecord)
-           (org.apache.kafka.common.serialization StringSerializer)))
+           (org.apache.kafka.clients.producer Callback KafkaProducer ProducerRecord)))
 
-(def message-producer nil)
+(defprotocol KafkaProducerProtocol
+  (send-event [this topic key value] "send an event to a producer"))
 
-(defrecord NotificationProducer [config state]
-  pf/KafkaProducer
-  (start-producer
-    [this]
-    (let [producer
-          (KafkaProducer. (doto (Properties.)
-                            (.putAll (merge config
-                                            {"key.serializer"   StringSerializer
-                                             "value.serializer" StringSerializer}))))]
-      (reset! state {:producer producer})))
 
-  (stop-producer
-    [this]
-    (ctl/info "Closing producer...")
-    (.close (get-in @state [:producer])))
+(defrecord NotificationProducer [config]
+  component/Lifecycle
+  (start
+    [component]
+    (let [existing-producer (:producer component)]
+      (when (not-empty existing-producer)
+        (ctl/info "Closing existing producer")
+        (.close existing-producer))
+      (ctl/info "Starting new producer")
+      (assoc component
+             :producer (KafkaProducer. (doto (Properties.)
+                                         (.putAll config))))))
 
+  (stop
+    [component]
+    (when-let [producer (:producer component)]
+      (ctl/info "Closing producer...")
+      (.close producer)
+      (dissoc component :producer)))
+
+  KafkaProducerProtocol
   (send-event
-    [this topic key value]
+    [component topic key value]
     (let [record (ProducerRecord. topic key value)
-          producer (get-in @state [:producer])]
+          producer (:producer component)]
       (.send producer record
              (reify Callback
                (onCompletion [_ metadata exception]
@@ -38,8 +43,6 @@
                                   " with offset " (.offset metadata))))))))))
 
 
-(defn -main
-  []
-  (let [service-config (config/read-config)]
-    (->NotificationProducer service-config
-                            (atom nil))))
+(defn new-notification-producer
+  [config]
+  (->NotificationProducer (:message-kafka-producer-config config)))

@@ -16,4 +16,5 @@
 (defn -main
   []
   (component-repl/reset)
+  (wss/stop-websocket-server)
   (wss/start-websocket-server service-config))

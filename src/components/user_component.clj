@@ -10,9 +10,9 @@
 (defn inject-dependencies
   [dependencies]
   (interceptor/interceptor
-    {:name  ::inject-dependencies
-     :enter (fn [context]
-              (assoc context :dependencies dependencies))}))
+   {:name  ::inject-dependencies
+    :enter (fn [context]
+             (assoc context :dependencies dependencies))}))
 
 
 (def content-negotiation-interceptor
@@ -20,28 +20,32 @@
 
 
 (defrecord UserComponent
-  [config db-pool in-memory-state-component]
+           [config db-pool in-memory-state-component]
   component/Lifecycle
 
   (start [component]
-    (ctl/info "Starting UserComponent")
-    (let [server (-> {::http/routes routes/routes
-                      ::http/type   :jetty
-                      ::http/join?  false
-                      ::http/port   (-> config
-                                        :notification-server
-                                        :port)}
-                     (http/default-interceptors)
-                     (update ::http/interceptors concat
-                             [(inject-dependencies component)
-                              content-negotiation-interceptor])
-                     (http/create-server)
-                     (http/start))]
-      (assoc component :server server)))
+    (let [server-map (-> {::http/routes routes/routes
+                          ::http/type   :jetty
+                          ::http/join?  false
+                          ::http/port   (-> config
+                                            :notification-server
+                                            :port)}
+                         (http/default-interceptors)
+                         (update ::http/interceptors concat
+                                 [(inject-dependencies component)
+                                  content-negotiation-interceptor]))
+          server (:server component)]
+      (when (not-empty server)
+        (ctl/info "Stopping existing UserComponent")
+        (http/stop server))
+      (ctl/info "Starting New UserComponent")
+      (assoc component :server (-> server-map
+                                   (http/create-server)
+                                   (http/start)))))
 
   (stop [component]
-    (ctl/info "Stopping UserComponent")
     (when-let [server (:server component)]
+      (ctl/info "Stopping UserComponent")
       (http/stop server))
     (assoc component :server nil)))
 

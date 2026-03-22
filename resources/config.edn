@@ -12,8 +12,9 @@
                        :user "nsd"
                        :maximumPoolSize 3}
  :message-kafka-producer-config {"bootstrap.servers" "localhost:9092"
-                                 ;; setting buffer memory to 20mb
-                                 "buffer.memory" "20484736"}
+                                 "buffer.memory" "20484736"
+                                 "key.serializer" "org.apache.kafka.common.serialization.StringSerializer"
+                                 "value.serializer" "org.apache.kafka.common.serialization.StringSerializer"}
  :message-kafka-topic "ns_message"
  :message-kafka-consumer-config {:bootstrap-servers "localhost:9092"
                                  :topic-name "ns_message"

@@ -1,18 +1,20 @@
 (ns messages.core
   (:require [clojure.data.json :as json]
             [messages.models :as mm]
-            [producers.factory :as pf]
-            [user-details.models :as udm]
-            [utils.function-utils :as ufu])
+            [producers.notification-message-producer :as pnmp]
+            [user-details.models :as udm])
   (:import [java.util UUID]))
 
 
 (defn send-message
-  [{:keys [message_id message_details]} {:keys [producer] :as dependencies}]
-  (ufu/improper-thrush (json/write-str message_details)
-                       (partial pf/send-event producer
-                                (get-in dependencies [:config :message-kafka-topic] "ns_message")
-                                message_id)))
+  [{:keys [message_id message_details]}
+   {:keys [producer] :as dependencies}]
+  (pnmp/send-event producer
+                   (get-in dependencies
+                           [:config :message-kafka-topic]
+                           "ns_message")
+                   message_id
+                   (json/write-str message_details)))
 
 
 (defn update-message-activity-log
