@@ -9,7 +9,7 @@
 (defn send-message
   [{:keys [message_id message_details]}
    {:keys [producer] :as dependencies}]
-  (pnmp/send-event producer
+  (pnmp/send-event (pnmp/map->NotificationProducer producer)
                    (get-in dependencies
                            [:config :message-kafka-topic]
                            "ns_message")
